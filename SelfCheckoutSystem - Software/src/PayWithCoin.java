@@ -2,18 +2,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import org.lsmr.selfcheckout.Coin;
 import org.lsmr.selfcheckout.devices.AbstractDevice;
-import org.lsmr.selfcheckout.devices.CoinDispenser;
-import org.lsmr.selfcheckout.devices.CoinSlot;
-import org.lsmr.selfcheckout.devices.CoinStorageUnit;
-import org.lsmr.selfcheckout.devices.CoinTray;
 import org.lsmr.selfcheckout.devices.CoinValidator;
 import org.lsmr.selfcheckout.devices.DisabledException;
 import org.lsmr.selfcheckout.devices.OverloadException;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
 import org.lsmr.selfcheckout.devices.SimulationException;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
-import org.lsmr.selfcheckout.devices.listeners.CoinSlotListener;
-import org.lsmr.selfcheckout.devices.listeners.CoinStorageUnitListener;
 import org.lsmr.selfcheckout.devices.listeners.CoinValidatorListener;
 
 public class PayWithCoin {

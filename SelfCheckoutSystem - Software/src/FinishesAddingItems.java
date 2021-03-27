@@ -7,7 +7,9 @@ import org.lsmr.selfcheckout.*;
 
 public class FinishesAddingItems {
 
-	public FinishesAddingItems(SelfCheckoutStation station) {
-		
+	public FinishesAddingItems(SelfCheckoutStation station, ScanItem scan) {
+		scan.
 	}
+	
+	//check for membership
 }

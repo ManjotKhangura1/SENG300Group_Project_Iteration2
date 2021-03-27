@@ -8,8 +8,8 @@ public class ScanItem {
 	//private double totPrice = 0;
 	private double totWeight = 0;
 	private ArrayList<String> totList;
-	private BarcodeScanner main;
-	private BarcodeScanner handheld;
+	public BarcodeScanner main;
+	public BarcodeScanner handheld;
 	private boolean isEnabled = false;
 
 	/**

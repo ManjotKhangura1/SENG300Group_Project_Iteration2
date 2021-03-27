@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.Currency;
-
 import org.lsmr.selfcheckout.Banknote;
 import org.lsmr.selfcheckout.devices.AbstractDevice;
 import org.lsmr.selfcheckout.devices.BanknoteValidator;

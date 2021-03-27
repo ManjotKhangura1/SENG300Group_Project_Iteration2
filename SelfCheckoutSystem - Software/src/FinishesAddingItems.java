@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 import org.lsmr.selfcheckout.devices.*;
 import org.lsmr.selfcheckout.devices.listeners.*;
 import org.lsmr.selfcheckout.*;
@@ -21,6 +19,7 @@ public class FinishesAddingItems {
 		
 		printer = station.printer;
 		this.scan = scan;
+		printerListener();
 	}
 	  
 	/**
@@ -35,15 +34,20 @@ public class FinishesAddingItems {
 	 */
 	public void printRecipt() {
 		
-		String str = scan.getTotalList().toString();
+		String str = scan.getTotalList().toString(); // the list of items
 		for(int i = 0; i < str.length(); i++) {
-				printer.print(str.charAt(i));
+				printer.print(str.charAt(i)); //one character at a time
 		}
+		
+		//could also print out more like price and weight here
 		
 		printer.cutPaper();
 		printer.removeReceipt();
 	}
 	
+	/**
+	 * creating instance of the printer listener
+	 */
 	private void printerListener() {
 		printer.register(new ReceiptPrinterListener() {
 

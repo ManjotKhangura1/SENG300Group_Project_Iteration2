@@ -17,7 +17,7 @@ public class FinishesAddingItems {
 		scan.main = null;
 		
 	}
-	
+	  
 	/**
 	 * Prompts a check for membership
 	 */

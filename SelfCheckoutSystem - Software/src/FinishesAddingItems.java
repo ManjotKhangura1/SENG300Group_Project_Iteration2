@@ -7,9 +7,21 @@ import org.lsmr.selfcheckout.*;
 
 public class FinishesAddingItems {
 
+	/**
+	 * Constructor to finish adding items
+	 * @param SelfCheckoutStation 
+	 * @param ScanItem
+	 */
 	public FinishesAddingItems(SelfCheckoutStation station, ScanItem scan) {
-		scan.
+		scan.handheld = null;
+		scan.main = null;
+		
 	}
 	
-	//check for membership
+	/**
+	 * Prompts a check for membership
+	 */
+	public void checkForMembership() {
+		
+	}
 }

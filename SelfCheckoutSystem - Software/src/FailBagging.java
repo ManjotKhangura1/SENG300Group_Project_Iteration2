@@ -1,3 +1,5 @@
+package src;
+
 import org.lsmr.selfcheckout.Item;
 
 import org.lsmr.selfcheckout.devices.*;

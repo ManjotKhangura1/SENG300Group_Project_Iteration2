@@ -1,21 +1,37 @@
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Currency;
+import java.util.List;
+import org.lsmr.selfcheckout.Banknote;
+import org.lsmr.selfcheckout.Coin;
+import org.lsmr.selfcheckout.devices.DisabledException;
+import org.lsmr.selfcheckout.devices.OverloadException;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
 import org.lsmr.selfcheckout.devices.SimulationException;
 
 public class GiveChange {
 	public SelfCheckoutStation station;
+	public Currency currency;
 	public PayWithBanknote payWithBanknote;
 	public PayWithCoin payWithCoin;
 	public double totalOwed;
 	public double totalPaid;
+	public double change;
+	
+	public int[] banknoteDenominations;
+	public List<BigDecimal> coinDenominations;
 
 	/**
 	 * Give Change constructor that gives change if only banknotes were used to pay
 	 * @param station The SelfCheckoutStation that is currently being used
+	 * @param currency The kind of currency permitted
 	 * @param total The total cost of the transaction
 	 * @param payWithBanknote The PayWithBanknote instance used to pay
 	 */
-	public GiveChange(SelfCheckoutStation station, double totalOwed, PayWithBanknote payWithBanknote) {
+	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithBanknote payWithBanknote) {
 		setStation(station);
+		setCurrency(currency);
 		setTotalOwed(totalOwed);
 		setPayWithBanknote(payWithBanknote);
 		setTotalPaid(payWithBanknote.getTotalPaid());
@@ -24,11 +40,13 @@ public class GiveChange {
 	/**
 	 * Give Change constructor that gives change if only coins were used to pay
 	 * @param station station The SelfCheckoutStation that is currently being used
+	 * @param currency The kind of currency permitted
 	 * @param total The total cost of the transaction
 	 * @param payWithCoin The PayWithCoin instance used to pay
 	 */
-	public GiveChange(SelfCheckoutStation station, double total, PayWithCoin payWithCoin) {
+	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithCoin payWithCoin) {
 		setStation(station);
+		setCurrency(currency);
 		setTotalOwed(totalOwed);
 		setPayWithCoin(payWithCoin);
 		setTotalPaid(payWithCoin.getcoinsPaid());
@@ -37,14 +55,16 @@ public class GiveChange {
 	/**
 	 * Give Change constructor that gives change if banknotes and coins were used to pay
 	 * @param station station The SelfCheckoutStation that is currently being used
+	 * @param currency The kind of currency permitted
 	 * @param total The total cost of the transaction
 	 * @param payWithBanknote The PayWithBanknote instance used to pay
 	 * @param payWithCoin The PayWithCoin instance used to pay
 	 */
-	public GiveChange(SelfCheckoutStation station, double total, PayWithBanknote payWithBanknote, PayWithCoin payWithCoin) {
+	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithBanknote payWithBanknote, PayWithCoin payWithCoin) {
 		double sum;
 		
 		setStation(station);
+		setCurrency(currency);
 		setTotalOwed(totalOwed);
 		setPayWithBanknote(payWithBanknote);
 		setPayWithCoin(payWithCoin);
@@ -52,6 +72,67 @@ public class GiveChange {
 		//grabbing the total paid by banknote and coins and adding them together
 		sum = payWithBanknote.getTotalPaid() + payWithCoin.getcoinsPaid();
 		setTotalPaid(sum);
+	}
+	
+	/**
+	 * Calculates the amount of change to be given
+	 */
+	public void calculateChange() {
+		setChange(totalPaid - totalOwed);
+	}
+	
+	/**
+	 * Dispenses the change owed to the user
+	 * @throws SimulationException If there is a dangling banknote in the slot
+	 * @throws SimulationException If the banknote slot is disabled
+	 * @throws SimulationException If the coin tray overflows
+	 * @throws SimulationException If the coin tray is disabled
+	 */
+	public void dispense() {
+		double changeLeftToDispense;
+		int amountToDispense;
+		
+		calculateChange();
+		changeLeftToDispense = change;
+		
+		
+		//grabbing the denominations values
+		this.banknoteDenominations = station.banknoteDenominations;
+		this.coinDenominations = station.coinDenominations;
+		
+		//sort the denominations to be greatest to least
+		Arrays.sort(banknoteDenominations);
+		Collections.sort(coinDenominations);
+			
+		//calculates the amount of each type of banknote to dispense and tries to dispense it
+		//starts with the largest denomination
+		for(int i = banknoteDenominations.length - 1; i < 0; i--) {
+			amountToDispense = (int) Math.floor(changeLeftToDispense / banknoteDenominations[i]);
+			//dispenses the amount needed of the current denomination
+			for(int j = 0; j < amountToDispense; j++) {
+				try {
+					station.banknoteOutput.emit(new Banknote(banknoteDenominations[i],currency));
+					changeLeftToDispense = changeLeftToDispense - banknoteDenominations[i];
+				} catch (SimulationException | DisabledException e) {
+					throw new SimulationException(e);
+				}				
+			}
+		}
+		
+		//calculates the amount of each type of coin to dispense and tries to dispense it
+		//starts with the largest denominations
+		for(int i = coinDenominations.size() - 1; i < 0; i--) {
+			amountToDispense = (int) Math.floor(changeLeftToDispense / coinDenominations.get(i).doubleValue());
+			//dispenses the amount needed of the current denomination
+			for(int j = 0; j < amountToDispense; j++) {
+				try {
+					station.coinTray.accept(new Coin(coinDenominations.get(i),currency));
+					changeLeftToDispense = changeLeftToDispense - coinDenominations.get(i).doubleValue();
+				} catch (OverloadException | DisabledException e) {
+					throw new SimulationException(e);
+				}
+			}
+		}
 	}
 
 	/**
@@ -73,6 +154,27 @@ public class GiveChange {
 			throw new SimulationException(new NullPointerException("station is null"));
 		}
 		this.station = station;
+	}
+	
+	/**
+	 * Gets the permitted currency
+	 * @return currency The kind of currency permitted
+	 */
+	public Currency getCurrency() {
+		return currency;
+	}
+	
+	/**
+	 * Sets the currency to given currency after checking if given is valid
+	 * @param currency The kind of currency permitted
+	 * @throws SimulationException if a null currency is given
+	 */
+	private void setCurrency(Currency currency) {
+		//throws and exception if station given is null
+		if (currency == null) {
+			throw new SimulationException(new NullPointerException("currency is null"));
+		}
+		this.currency = currency;
 	}
 	
 	/**
@@ -157,6 +259,28 @@ public class GiveChange {
 					new IllegalArgumentException("totalPaid cannot be less than nothing"));
 		}
 		this.totalPaid = totalPaid;
+	}
+	
+	/**
+	 * Gets the change amount due for the transaction 
+	 * @return change the amount of change 
+	 */
+	public double getChange() {
+		return change;
+	}
+
+	/**
+	 * Sets the change amount to given change amount after checking if given is valid
+	 * @param change the given change
+	 * @throws SimulationException if change is less than 0.00
+	 */
+	private void setChange(double change) {
+		//throws exception if totalOwed is less than 0.00
+		if (change < 0.00) {
+			throw new SimulationException(
+					new IllegalArgumentException("amount of change to be given cannot be less than nothing"));
+		}
+		this.change = change;
 	}
 	
 

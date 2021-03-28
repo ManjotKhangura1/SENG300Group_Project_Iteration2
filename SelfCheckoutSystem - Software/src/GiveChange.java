@@ -14,12 +14,15 @@ import org.lsmr.selfcheckout.devices.BanknoteValidator;
 import org.lsmr.selfcheckout.devices.CoinDispenser;
 import org.lsmr.selfcheckout.devices.CoinTray;
 import org.lsmr.selfcheckout.devices.DisabledException;
+import org.lsmr.selfcheckout.devices.EmptyException;
 import org.lsmr.selfcheckout.devices.OverloadException;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
 import org.lsmr.selfcheckout.devices.SimulationException;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
+import org.lsmr.selfcheckout.devices.listeners.BanknoteDispenserListener;
 import org.lsmr.selfcheckout.devices.listeners.BanknoteSlotListener;
 import org.lsmr.selfcheckout.devices.listeners.BanknoteValidatorListener;
+import org.lsmr.selfcheckout.devices.listeners.CoinDispenserListener;
 import org.lsmr.selfcheckout.devices.listeners.CoinTrayListener;
 
 public class GiveChange {
@@ -32,11 +35,11 @@ public class GiveChange {
 	public double change;
 	public int[] banknoteDenominations;
 	public List<BigDecimal> coinDenominations;
-	public Map<Integer, BanknoteDispenser> banknoteDispensers;
-	public Map<BigDecimal, CoinDispenser> coinDispensers;
 	public boolean banknoteSlotEnabled;
 	public boolean banknoteRemoved;
 	public boolean coinTrayEnabled;
+	private Banknote currentBanknote; 
+	private Coin currentCoin;
 
 	/**
 	 * Give Change constructor that gives change if only banknotes were used to pay
@@ -48,6 +51,9 @@ public class GiveChange {
 	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithBanknote payWithBanknote) {
 		setStation(station);
 		setCurrency(currency);
+		//grabbing the denominations values
+		this.banknoteDenominations = station.banknoteDenominations;
+		this.coinDenominations = station.coinDenominations;
 		setTotalOwed(totalOwed);
 		setPayWithBanknote(payWithBanknote);
 		setTotalPaid(payWithBanknote.getTotalPaid());
@@ -65,6 +71,9 @@ public class GiveChange {
 	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithCoin payWithCoin) {
 		setStation(station);
 		setCurrency(currency);
+		//grabbing the denominations values
+		this.banknoteDenominations = station.banknoteDenominations;
+		this.coinDenominations = station.coinDenominations;
 		setTotalOwed(totalOwed);
 		setPayWithCoin(payWithCoin);
 		setTotalPaid(payWithCoin.getcoinsPaid());
@@ -85,6 +94,9 @@ public class GiveChange {
 		
 		setStation(station);
 		setCurrency(currency);
+		//grabbing the denominations values
+		this.banknoteDenominations = station.banknoteDenominations;
+		this.coinDenominations = station.coinDenominations;
 		setTotalOwed(totalOwed);
 		setPayWithBanknote(payWithBanknote);
 		setPayWithCoin(payWithCoin);
@@ -109,8 +121,12 @@ public class GiveChange {
 	 * Dispenses the change owed to the user
 	 * @throws SimulationException If there is a dangling banknote in the slot
 	 * @throws SimulationException If the banknote slot is disabled
+	 * @throws SimulationException If no banknotes are present in the dispenser to release 
+	 * @throws SimulationException If the output channel is unable to accept another banknote
 	 * @throws SimulationException If the coin tray overflows
 	 * @throws SimulationException If the coin tray is disabled
+	 * @throws SimulationException If no coins are present in the dispenser to release 
+	 * 
 	 */
 	public void dispense() {
 		double changeLeftToDispense;
@@ -118,11 +134,6 @@ public class GiveChange {
 		
 		calculateChange();
 		changeLeftToDispense = change;
-		
-		
-		//grabbing the denominations values
-		this.banknoteDenominations = station.banknoteDenominations;
-		this.coinDenominations = station.coinDenominations;
 		
 		//sort the denominations to be greatest to least
 		Arrays.sort(banknoteDenominations);
@@ -135,10 +146,10 @@ public class GiveChange {
 			//dispenses the amount needed of the current denomination
 			for(int j = 0; j < amountToDispense; j++) {
 				try {
-					
-					station.banknoteOutput.emit(new Banknote(banknoteDenominations[i],currency));
+					station.banknoteDispensers.get(banknoteDenominations[i]).emit();
+					station.banknoteOutput.emit(currentBanknote);
 					changeLeftToDispense = changeLeftToDispense - banknoteDenominations[i];
-				} catch (SimulationException | DisabledException e) {
+				} catch (SimulationException | DisabledException | EmptyException | OverloadException e) {
 					throw new SimulationException(e);
 				}				
 			}
@@ -151,9 +162,10 @@ public class GiveChange {
 			//dispenses the amount needed of the current denomination
 			for(int j = 0; j < amountToDispense; j++) {
 				try {
-					station.coinTray.accept(new Coin(coinDenominations.get(i),currency));
+					station.coinDispensers.get(coinDenominations.get(i)).emit();
+					station.coinTray.accept(currentCoin);
 					changeLeftToDispense = changeLeftToDispense - coinDenominations.get(i).doubleValue();
-				} catch (OverloadException | DisabledException e) {
+				} catch (OverloadException | DisabledException | EmptyException e) {
 					throw new SimulationException(e);
 				}
 			}
@@ -218,6 +230,113 @@ public class GiveChange {
 				
 			}
 		});
+		
+		for(int i = 0; i < station.banknoteDispensers.size(); i++) {
+			station.banknoteDispensers.get(banknoteDenominations[i]).register(new BanknoteDispenserListener() {
+				
+				@Override
+				public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void banknotesUnloaded(BanknoteDispenser dispenser, Banknote... banknotes) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void banknotesLoaded(BanknoteDispenser dispenser, Banknote... banknotes) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void banknotesFull(BanknoteDispenser dispenser) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void banknotesEmpty(BanknoteDispenser dispenser) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void banknoteRemoved(BanknoteDispenser dispenser, Banknote banknote) {
+					currentBanknote = banknote;
+					
+				}
+				
+				@Override
+				public void banknoteAdded(BanknoteDispenser dispenser, Banknote banknote) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+		}
+		
+		for(int i = 0; i < station.coinDispensers.size(); i++) {
+			station.coinDispensers.get(coinDenominations.get(i)).register(new CoinDispenserListener() {
+				
+				@Override
+				public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void coinsUnloaded(CoinDispenser dispenser, Coin... coins) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void coinsLoaded(CoinDispenser dispenser, Coin... coins) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void coinsFull(CoinDispenser dispenser) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void coinsEmpty(CoinDispenser dispenser) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void coinRemoved(CoinDispenser dispenser, Coin coin) {
+					currentCoin = coin;
+					
+				}
+				
+				@Override
+				public void coinAdded(CoinDispenser dispenser, Coin coin) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+		}
+		
 	}
 
 	/**

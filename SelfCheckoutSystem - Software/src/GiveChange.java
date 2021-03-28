@@ -3,11 +3,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Currency;
 import java.util.List;
+import java.util.Map;
+
 import org.lsmr.selfcheckout.Banknote;
 import org.lsmr.selfcheckout.Coin;
 import org.lsmr.selfcheckout.devices.AbstractDevice;
+import org.lsmr.selfcheckout.devices.BanknoteDispenser;
 import org.lsmr.selfcheckout.devices.BanknoteSlot;
 import org.lsmr.selfcheckout.devices.BanknoteValidator;
+import org.lsmr.selfcheckout.devices.CoinDispenser;
 import org.lsmr.selfcheckout.devices.CoinTray;
 import org.lsmr.selfcheckout.devices.DisabledException;
 import org.lsmr.selfcheckout.devices.OverloadException;
@@ -28,6 +32,8 @@ public class GiveChange {
 	public double change;
 	public int[] banknoteDenominations;
 	public List<BigDecimal> coinDenominations;
+	public Map<Integer, BanknoteDispenser> banknoteDispensers;
+	public Map<BigDecimal, CoinDispenser> coinDispensers;
 	public boolean banknoteSlotEnabled;
 	public boolean banknoteRemoved;
 	public boolean coinTrayEnabled;
@@ -129,6 +135,7 @@ public class GiveChange {
 			//dispenses the amount needed of the current denomination
 			for(int j = 0; j < amountToDispense; j++) {
 				try {
+					
 					station.banknoteOutput.emit(new Banknote(banknoteDenominations[i],currency));
 					changeLeftToDispense = changeLeftToDispense - banknoteDenominations[i];
 				} catch (SimulationException | DisabledException e) {

@@ -7,6 +7,13 @@ public class FinishesAddingItems {
 	ReceiptPrinter printer;
 	ScanItem scan;
 	boolean isEnabled;
+	
+	PayWithCoin coin;
+	PayWithBanknote banknote;
+	PayWithDebit debit;
+	//PayWithCredit credit;
+	
+	
 
 	/**
 	 * Constructor to finish transaction
@@ -17,6 +24,12 @@ public class FinishesAddingItems {
 		scan.handheld = null;
 		scan.main = null;
 		
+		coin = new PayWithCoin(station);
+		banknote = new PayWithBanknote(station);
+		//debit = new PayWithDebit(station);
+		//credit = new PayWithCredit(station);
+		
+		
 		printer = station.printer;
 		this.scan = scan;
 		printerListener();
@@ -26,6 +39,12 @@ public class FinishesAddingItems {
 	 * Prompts a check for membership
 	 */
 	public void checkForMembership() {
+		
+	}
+	/**
+	 * starts the paying process
+	 */
+	public void pay() {
 		
 	}
 	

@@ -1,4 +1,5 @@
 import org.lsmr.selfcheckout.Item;
+
 import org.lsmr.selfcheckout.devices.*;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
 import org.lsmr.selfcheckout.devices.listeners.ElectronicScaleListener;

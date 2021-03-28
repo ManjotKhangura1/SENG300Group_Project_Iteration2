@@ -68,7 +68,7 @@ public class FinishesAddingItems {
 	 * creating instance of the printer listener
 	 */
 	private void printerListener() {
-		printer.register(new ReceiptPrinterListener() {
+		printer.register(new ReceiptPrinterListener() {  
 
 			@Override
 			public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {

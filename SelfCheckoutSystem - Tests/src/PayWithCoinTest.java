@@ -152,9 +152,9 @@ public class PayWithCoinTest {
 		payWithCoin.setEnabled(true);
 		payWithCoin.pay(coin);
 		
-		int expected = coin.getValue().intValue();
+		double expected = coin.getValue().doubleValue();
 		
-		assertEquals(expected,payWithCoin.getcoinsPaid());
+		assertEquals(expected,payWithCoin.getcoinsPaid(),0);
 	}
 
 	@Test //Test if getStation gets the correct station

@@ -7,7 +7,7 @@ import org.lsmr.selfcheckout.devices.listeners.ElectronicScaleListener;
 public class BaggingArea {
 
 		
-	private ElectronicScale baggingArea;
+	public ElectronicScale baggingArea;
 	
 	private double totalWeightInBagging;
 	private double totalWeightScanned;

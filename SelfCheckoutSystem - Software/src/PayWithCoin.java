@@ -12,7 +12,7 @@ import org.lsmr.selfcheckout.devices.listeners.CoinValidatorListener;
 
 public class PayWithCoin {
 
-	public int coinsPaid;
+	public double coinsPaid;
 	public ArrayList<Coin> depositedCoins;
 	public SelfCheckoutStation station;
 
@@ -39,7 +39,7 @@ public class PayWithCoin {
 
 		depositedCoins = new ArrayList<Coin>(); // Coin array list is made.
 
-		coinsPaid = 0; // total coins paid are 0.
+		coinsPaid = 0.00; // total coins paid are 0.
 
 		startListeners();
 	}
@@ -151,7 +151,7 @@ public class PayWithCoin {
 	 * 
 	 * @return coinsPaid return the total value of coins inserted
 	 */
-	public int getcoinsPaid() {
+	public double getcoinsPaid() {
 		return coinsPaid;
 	}
 

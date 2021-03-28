@@ -5,10 +5,18 @@ import java.util.Currency;
 import java.util.List;
 import org.lsmr.selfcheckout.Banknote;
 import org.lsmr.selfcheckout.Coin;
+import org.lsmr.selfcheckout.devices.AbstractDevice;
+import org.lsmr.selfcheckout.devices.BanknoteSlot;
+import org.lsmr.selfcheckout.devices.BanknoteValidator;
+import org.lsmr.selfcheckout.devices.CoinTray;
 import org.lsmr.selfcheckout.devices.DisabledException;
 import org.lsmr.selfcheckout.devices.OverloadException;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
 import org.lsmr.selfcheckout.devices.SimulationException;
+import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
+import org.lsmr.selfcheckout.devices.listeners.BanknoteSlotListener;
+import org.lsmr.selfcheckout.devices.listeners.BanknoteValidatorListener;
+import org.lsmr.selfcheckout.devices.listeners.CoinTrayListener;
 
 public class GiveChange {
 	public SelfCheckoutStation station;
@@ -18,9 +26,11 @@ public class GiveChange {
 	public double totalOwed;
 	public double totalPaid;
 	public double change;
-	
 	public int[] banknoteDenominations;
 	public List<BigDecimal> coinDenominations;
+	public boolean banknoteSlotEnabled;
+	public boolean banknoteRemoved;
+	public boolean coinTrayEnabled;
 
 	/**
 	 * Give Change constructor that gives change if only banknotes were used to pay
@@ -35,6 +45,8 @@ public class GiveChange {
 		setTotalOwed(totalOwed);
 		setPayWithBanknote(payWithBanknote);
 		setTotalPaid(payWithBanknote.getTotalPaid());
+		startListener();
+		banknoteSlotEnabled = true;
 	}
 
 	/**
@@ -50,6 +62,8 @@ public class GiveChange {
 		setTotalOwed(totalOwed);
 		setPayWithCoin(payWithCoin);
 		setTotalPaid(payWithCoin.getcoinsPaid());
+		startListener();
+		coinTrayEnabled = true;
 	}
 
 	/**
@@ -72,6 +86,10 @@ public class GiveChange {
 		//grabbing the total paid by banknote and coins and adding them together
 		sum = payWithBanknote.getTotalPaid() + payWithCoin.getcoinsPaid();
 		setTotalPaid(sum);
+		
+		startListener();
+		banknoteSlotEnabled = true;
+		coinTrayEnabled = true;
 	}
 	
 	/**
@@ -133,6 +151,66 @@ public class GiveChange {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Registers the listener
+	 */
+	private void startListener() {
+	
+		station.banknoteOutput.register(new BanknoteSlotListener() {
+			
+			@Override
+			public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+				banknoteSlotEnabled = true;
+				
+			}
+			
+			@Override
+			public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+				banknoteSlotEnabled = false;
+				
+			}
+			
+			@Override
+			public void banknoteRemoved(BanknoteSlot slot) {
+				banknoteRemoved = true;
+				
+			}
+			
+			@Override
+			public void banknoteInserted(BanknoteSlot slot) {
+				// unnecessary to keep track of since this class takes care of giving change only (aka only ejecting)
+				
+			}
+			
+			@Override
+			public void banknoteEjected(BanknoteSlot slot) {
+				banknoteRemoved = false;
+				
+			}
+		});
+		
+		station.coinTray.register(new CoinTrayListener() {
+			
+			@Override
+			public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+				coinTrayEnabled = true;
+				
+			}
+			
+			@Override
+			public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+				coinTrayEnabled = false;
+				
+			}
+			
+			@Override
+			public void coinAdded(CoinTray tray) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 	}
 
 	/**
@@ -283,5 +361,28 @@ public class GiveChange {
 		this.change = change;
 	}
 	
+	/**
+	 * Gets the banknoteSlotEnabled boolean
+	 * @return banknoteSlotEnabled The banknoteSlotEnabled boolean
+	 */
+	public boolean getBanknoteSlotEnabled() {
+		return banknoteSlotEnabled;
+	}
+	
+	/**
+	 * Gets the coinTrayEnabled boolean
+	 * @return coinTrayEnabled The coinTrayEnabled boolean
+	 */
+	public boolean getCoinTrayEnabled() {
+		return coinTrayEnabled;
+	}
+	
+	/**
+	 * Gets the banknoteRemoved boolean
+	 * @return banknoteRemoved The banknoteRemoved boolean
+	 */
+	public boolean getBanknoteRemoved() {
+		return banknoteRemoved;
+	}
 
 }

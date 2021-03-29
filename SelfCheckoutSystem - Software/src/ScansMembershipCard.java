@@ -1,3 +1,6 @@
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+
 import org.lsmr.selfcheckout.Card;
 import org.lsmr.selfcheckout.Card.CardData;
 import org.lsmr.selfcheckout.devices.AbstractDevice;
@@ -10,8 +13,9 @@ public class ScansMembershipCard { //through card reader
 
 	public SelfCheckoutStation aSelfCheckoutStation;
 	public Card aMembershipCard;
-	public boolean cardIsInserted; 
-	//just use this variable from CR class using . instead of creating this
+	
+	//initially card data is not read
+	public boolean cardDataIsRead=false;
 	
 	public CardData data;
 	
@@ -21,29 +25,57 @@ public class ScansMembershipCard { //through card reader
 		//do the registering here with CSL
 	}
 	
-	public void tapMembershipCard(Card aCard) {
+	public CardData tapMembershipCard(Card aCard) {
+		
 		try {
 			data= aSelfCheckoutStation.cardReader.tap(aMembershipCard);
- 				
+			
+			if(cardDataIsRead==true) {
+				return data;
+			}
+				
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}	
+		}
 		
 		return data;
 	}
 	
-	public void swipeMembershipCard() {
+	public CardData swipeMembershipCard(Card aCard, BufferedImage aSignature) {
 		
-
-		
+		try {
+			data=aSelfCheckoutStation.cardReader.swipe(aMembershipCard, aSignature);
+			
+			if(cardDataIsRead==true) {
+				return data;
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+			return null;
 	}
 	
-	public void insertMembershipCard() {
+	public CardData insertMembershipCard(Card aCard, String aPin) {
 	
+		try {
+			data=aSelfCheckoutStation.cardReader.insert(aMembershipCard, aPin);
+			
+			if(cardDataIsRead==true) {
+				return data;
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;	
 }
 	
-
 	//read the card using class CardReader which makes use of CRListener
 	//different ways to read card: tap, swipe, insert
 	//SCS has a cardReader so use everything off that
@@ -89,11 +121,11 @@ public class ScansMembershipCard { //through card reader
 
 		@Override
 		public void cardDataRead(CardReader reader, CardData data) {
-			// TODO Auto-generated method stub
+			cardDataIsRead=true;
 			
 		}
 		  
 	  };
-	
+	  
 }
 

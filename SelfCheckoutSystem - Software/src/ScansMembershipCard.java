@@ -13,6 +13,8 @@ public class ScansMembershipCard { //through card reader
 	public boolean cardIsInserted; 
 	//just use this variable from CR class using . instead of creating this
 	
+	public CardData data;
+	
 	public ScansMembershipCard(SelfCheckoutStation station, Card aCard) {
 		aSelfCheckoutStation= station;
 		aMembershipCard= aCard;

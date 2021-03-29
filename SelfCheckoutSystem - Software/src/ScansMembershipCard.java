@@ -20,8 +20,15 @@ public class ScansMembershipCard { //through card reader
 	}
 	
 	public void tapMembershipCard(Card aCard) {
-
+		try {
+			data= aSelfCheckoutStation.cardReader.tap(aMembershipCard);
+ 				
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
 		
+		return data;
 	}
 	
 	public void swipeMembershipCard() {

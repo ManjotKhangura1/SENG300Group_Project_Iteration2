@@ -1,23 +1,28 @@
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.lsmr.selfcheckout.devices.*;
 import org.lsmr.selfcheckout.devices.listeners.*;
+import org.lsmr.selfcheckout.products.BarcodedProduct;
 import org.lsmr.selfcheckout.*;
 
 public class ScanItem {
-	//private double totPrice = 0;
+	private double totPrice = 0;
 	private double totWeight = 0;
 	private ArrayList<String> totList;
 	public BarcodeScanner main;
 	public BarcodeScanner handheld;
 	private boolean isEnabled = false;
+	public static Map<Barcode, BarcodedProduct> database;
+	
+	private double curWeight; //only used locally
 
 	/**
 	 * scans items
 	 * @param BarcodedItem item
 	 * @throws SimulationException if SelfCheckoutStation is null
 	 */
-	public ScanItem(SelfCheckoutStation station) {
+	public ScanItem(SelfCheckoutStation station, Map<Barcode, BarcodedProduct> database) {
 		if(station == null) throw new SimulationException(new NullPointerException("station is null"));
 		
 		main = station.mainScanner;
@@ -25,6 +30,7 @@ public class ScanItem {
 		handheld = station.handheldScanner;
 		handheld.enable();
 		totList = new ArrayList<String>();
+		ScanItem.database = database;
 		
 		scannerListener();
 	}
@@ -37,8 +43,9 @@ public class ScanItem {
 	public void scanFromMain(BarcodedItem item) {
 		if(item == null) throw new SimulationException(new NullPointerException("item is null"));
 		
+
 		main.scan(item);
-		updateWeight(item.getWeight());
+		curWeight = item.getWeight();
 	}
 	
 	/**
@@ -50,8 +57,7 @@ public class ScanItem {
 		if(item == null) throw new SimulationException(new NullPointerException("item is null"));
 		
 		handheld.scan(item);
-		updateWeight(item.getWeight());
-		
+		curWeight = item.getWeight();
 	}
 	
 	/**
@@ -65,18 +71,6 @@ public class ScanItem {
 	private void updateWeight(double d) {
 		totWeight += d;
 	}	
-	
-	/**
-	 * adds the last scanned items price to the total price
-	 * 
-	 * at the moment there is no price attached to barcodedItem, but this is here for future implementation
-	 * this is not an ideal way to update price it would be better handled through the listener
-	 * @param double
-	 * 
-	 * private void updatePrice(double p){
-	 * 	totPrice += p;
-	 * }
-	 */
 	
 	/**
 	 * returns the total weight of scanned items
@@ -97,16 +91,26 @@ public class ScanItem {
 	/**
 	 * returns the total price of scanned items
 	 * @return total price
-	 * 
-	 * public double getTotalPrice(){
-	 * 	return totPrice;
-	 * }
 	 */
-	
+	 public double getTotalPrice(){
+	  	return totPrice;
+	 }
+	 
+	/**
+	 * returns that value that the listener is enabled
+	 * @return boolean is enabled
+	 */
 	public boolean getIsEnabled() {
 		return isEnabled;
 	}
 	
+	/**
+	 * looks up the product from the database and updates price
+	 * @param barcode
+	 */
+	private void lookupProduct(Barcode barcode) {
+		totPrice += database.get(barcode).getPrice().doubleValue();
+	}
 	
 	/**
 	 * create an instance of the listener 
@@ -127,6 +131,8 @@ public class ScanItem {
 			@Override
 			public void barcodeScanned(BarcodeScanner barcodeScanner, Barcode barcode) {
 				totList.add(barcode.toString());
+				updateWeight(curWeight);
+				lookupProduct(barcode);
 			}
 			
 		});
@@ -145,6 +151,8 @@ public class ScanItem {
 			@Override
 			public void barcodeScanned(BarcodeScanner barcodeScanner, Barcode barcode) {
 				totList.add(barcode.toString());
+				updateWeight(curWeight);
+				lookupProduct(barcode);
 			}
 			
 		});

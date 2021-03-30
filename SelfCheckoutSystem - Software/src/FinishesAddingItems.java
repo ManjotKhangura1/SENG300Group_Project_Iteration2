@@ -25,6 +25,11 @@ public class FinishesAddingItems {
 	 * @param ScanItem
 	 */
 	public FinishesAddingItems(SelfCheckoutStation station, ScanItem scan, BaggingArea bags) {
+		
+		if(station == null) throw new SimulationException(new NullPointerException("station is null"));
+		if(scan == null) throw new SimulationException(new NullPointerException("scanner is null"));
+		if(bags == null) throw new SimulationException(new NullPointerException("bagging area is null"));
+		
 		scan.handheld.disable();
 		scan.main.disable();
 		bags.baggingArea.disable();

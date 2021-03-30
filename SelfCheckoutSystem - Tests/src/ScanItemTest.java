@@ -45,6 +45,7 @@ public class ScanItemTest {
 	public void tearDown() throws Exception {
 		station = null;
 		barcodedItem = null;
+		database = null;
 	}
 
 	@Test //test to make sure the constructor works as intended

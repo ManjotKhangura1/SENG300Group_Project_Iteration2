@@ -22,9 +22,11 @@ public class ScansMembershipCard { //through card reader
 	
 	public CardData data;
 	
-	Card validCard1 = new Card("Membership", "1234567", "A Name", null, null, true, false);
+	//instance of some arbitrary valid cards for testing purposes
+	//(false, false) because a membership card doesn't have a chip and can't be tapped
+	Card validCard1 = new Card("Membership", "1234567", "A Name", null, null, false, false);
+	Card validCard2 = new Card("Membership", "2345678", "A Name", null, null, false, false);
 	
-	Card validCard2 = new Card("Membership", "2345678", "A Name", null, null, true, false);
 	//creating a database with valid card numbers
 	public  HashMap<String, Card> validMembershipData= new HashMap<>();
 
@@ -35,6 +37,7 @@ public class ScansMembershipCard { //through card reader
 	
 	public CardReaderListener crl = new CardReaderListener() {
 		
+		//We do not make use of these 5 listeners
 		@Override
 		public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
 		// TODO Auto-generated method stub	
@@ -55,6 +58,7 @@ public class ScansMembershipCard { //through card reader
 		public void cardTapped(CardReader reader) {
 			// TODO Auto-generated method stub	
 		}
+		
 		@Override
 		public void cardSwiped(CardReader reader) {
 			cardIsSwiped=true;
@@ -65,11 +69,11 @@ public class ScansMembershipCard { //through card reader
 			cardDataIsRead=true;
 			
 		}	  
-	  };
-	  
+	  };  
 	
 	//constructor for use case
 	//passing instance of self checkout station because all operations are done through it
+	//putting elements into the valid membership card database
 	public ScansMembershipCard(SelfCheckoutStation station) {
 		
 		aSelfCheckoutStation= station;
@@ -77,14 +81,13 @@ public class ScansMembershipCard { //through card reader
 		//registering card reader and listener
 		aSelfCheckoutStation.cardReader.register(crl);
 		
-		//initializing database
+		//initializing database with valid membership
 		 validMembershipData.put("1234567", validCard1);
 		 validMembershipData.put("2345678", validCard2);
 		
 	}
 	
-
-	//swipe a valid membership card and the data will be read and returned
+	//swipe a valid membership card and the appropriate listeners will be triggered & the data will be read and returned
 	public CardData swipeMembershipCard(Card aMembershipCard, BufferedImage aSignature) {
 		try {
 			String memNumber = (aMembershipCard.swipe().getNumber());

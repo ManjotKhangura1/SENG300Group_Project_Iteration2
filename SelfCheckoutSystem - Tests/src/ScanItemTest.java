@@ -3,6 +3,8 @@ import static org.junit.Assert.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Currency;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -12,11 +14,12 @@ import org.lsmr.selfcheckout.BarcodedItem;
 import org.lsmr.selfcheckout.devices.*;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
 import org.lsmr.selfcheckout.devices.listeners.BarcodeScannerListener;
+import org.lsmr.selfcheckout.products.BarcodedProduct;
 
 public class ScanItemTest {
 	SelfCheckoutStation station;
 	BarcodedItem barcodedItem;
-	
+	Map<Barcode, BarcodedProduct> database;
 
 	@Before
 	public void setUp() throws Exception {
@@ -30,8 +33,12 @@ public class ScanItemTest {
 		station = new SelfCheckoutStation(currency, noteDenominations, coinDenomonations, maxWeight,scaleSensitivity);
 		
 		//Creates a barcoded item
-		barcodedItem = new BarcodedItem(new Barcode("1"), 50);
+		Barcode barcode = new Barcode("1");
+		barcodedItem = new BarcodedItem(barcode, 50);
+		BarcodedProduct product = new BarcodedProduct(barcode, "the only item we sell", BigDecimal.valueOf(10.50));
 		
+		database = new HashMap<>();
+		database.put(barcode, product);
 	}
 
 	@After
@@ -45,14 +52,14 @@ public class ScanItemTest {
 		
 		//this test should pass as station is valid argument
 		try {
-			ScanItem scanner = new ScanItem(station);
+			ScanItem scanner = new ScanItem(station, database);
 		} catch(Exception e) {
 			fail();
 		}
 		
 		//the constructor should throw an exception as the selfCheckoutStation is invalid
 		try {
-			ScanItem scanner = new ScanItem(null);
+			ScanItem scanner = new ScanItem(null, null);
 			fail();
 		} catch(Exception e) {
 			assertTrue(e instanceof SimulationException);
@@ -61,7 +68,7 @@ public class ScanItemTest {
 
 	@Test //test to make sure scanning from main is working as intended
 	public void testScanFromMain() {
-		ScanItem scanner = new ScanItem(station);
+		ScanItem scanner = new ScanItem(station, database);
 		
 		ArrayList<String> expected = new ArrayList<String>();
 		expected.add("1");
@@ -75,6 +82,8 @@ public class ScanItemTest {
 		
 		assertTrue(scanner.getTotalList().contains("1"));
 		
+		assertTrue(scanner.getTotalPrice() > (10.50 * 80));
+		
 		try {
 			scanner.scanFromMain(null);
 			fail();
@@ -87,7 +96,7 @@ public class ScanItemTest {
 	
 	@Test //test to make sure scanning from handheld is working as intended
 	public void testScanFromHandheld() {
-		ScanItem scanner = new ScanItem(station);
+		ScanItem scanner = new ScanItem(station, database);
 		
 		ArrayList<String> expected = new ArrayList<String>();
 		expected.add("1");
@@ -101,6 +110,8 @@ public class ScanItemTest {
 		
 		assertTrue(scanner.getTotalList().contains("1"));
 		
+		assertTrue(scanner.getTotalPrice() > (10.50 * 80));
+		
 		try {
 			scanner.scanFromHandheld(null);
 			fail();
@@ -113,7 +124,7 @@ public class ScanItemTest {
 	
 	@Test
 	public void testListeners() {
-		ScanItem scanner = new ScanItem(station);
+		ScanItem scanner = new ScanItem(station, database);
 		station.mainScanner.enable();
 		assertTrue(scanner.getIsEnabled());
 		

@@ -61,28 +61,29 @@ public class FinishesAddingItemsTest {
 		database = null;
 	}
 
-	@Test
+	@Test //test the constructor
 	public void testFinishesAddingItems() {
+		//the constructor should disable the scanner and bagging area
 		FinishesAddingItems finished = new FinishesAddingItems(station, scanner, bags);
 		
 		assertFalse(scanner.getIsEnabled());
 		assertFalse(bags.getIsEnabled());
 		
-		try {
+		try { //station should not be null
 			FinishesAddingItems finished1 = new FinishesAddingItems(null, scanner, bags);
 			fail();
 		}catch(Exception e) {
 			assertTrue(e instanceof SimulationException);
 		}
 		
-		try {
+		try { //scanner should not be null
 			FinishesAddingItems finished2 = new FinishesAddingItems(station, null, bags);
 			fail();
 		}catch(Exception e) {
 			assertTrue(e instanceof SimulationException);
 		}
 		
-		try {
+		try { //bagging area should not be null
 			FinishesAddingItems finished3 = new FinishesAddingItems(station, scanner, null);
 			fail();
 		}catch(Exception e) {
@@ -94,14 +95,17 @@ public class FinishesAddingItemsTest {
 	public void testGetPrice() {
 		FinishesAddingItems finished = new FinishesAddingItems(station, scanner, bags);
 		
-		assertTrue(finished.getPrice() > (10.50 * 80));
+		assertTrue(finished.getPrice() >= (10.50 * 80));
+		assertFalse(finished.getPrice() < (10.50 * 80)); // scanner should have an 80% success rate and the item price is 10.50
 	}
 
 	@Test
 	public void testGetList() {
 		FinishesAddingItems finished = new FinishesAddingItems(station, scanner, bags);
 		
-		assertTrue(finished.getList().contains("1"));
+		assertTrue(finished.getList().contains("1")); //item barcode name is "1"
+		assertTrue(finished.getList().size() >= 80); //there should be more then 80 items
+		assertFalse(finished.getList().size() < 80); //there should not be less them 80 items
 	}
 
 }

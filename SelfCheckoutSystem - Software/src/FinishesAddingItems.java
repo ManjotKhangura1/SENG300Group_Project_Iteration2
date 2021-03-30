@@ -30,9 +30,10 @@ public class FinishesAddingItems {
 		if(scan == null) throw new SimulationException(new NullPointerException("scanner is null"));
 		if(bags == null) throw new SimulationException(new NullPointerException("bagging area is null"));
 		
-		scan.handheld.disable();
-		scan.main.disable();
-		bags.baggingArea.disable();
+		//if the user is done adding items then the scanners and with weigh area do not need to continue updating
+		scan.handheld.disable(); //disable the hand held scanner
+		scan.main.disable(); //disable the main scanner
+		bags.baggingArea.disable(); //disable the weigh scale
 		
 		finalPrice = scan.getTotalPrice();
 		finalList = scan.getTotalList();

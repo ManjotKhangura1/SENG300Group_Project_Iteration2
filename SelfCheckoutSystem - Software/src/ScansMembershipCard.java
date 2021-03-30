@@ -22,9 +22,9 @@ public class ScansMembershipCard { //through card reader
 	
 	public CardData data;
 	
-	Card validCard1 = new Card("Membership", "123456", "A Name", null, null, false, false);
+	Card validCard1 = new Card("Membership", "1234567", "A Name", null, null, false, false);
 	
-	Card validCard2 = new Card("Membership", "234567", "A Name", null, null, false, false);
+	Card validCard2 = new Card("Membership", "2345678", "A Name", null, null, false, false);
 	//creating a database with valid card numbers
 	public  HashMap<String, Card> validMembershipData= new HashMap<>();
 
@@ -93,6 +93,8 @@ public class ScansMembershipCard { //through card reader
 		if(validMembershipData.containsKey(aMembershipCard)) {
 			try {
 				data= aSelfCheckoutStation.cardReader.tap(aMembershipCard);
+				
+				cardDataIsRead=true;
 				
 				if(cardDataIsRead==true) {
 					return data;

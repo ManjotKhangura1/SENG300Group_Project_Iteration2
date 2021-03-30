@@ -438,7 +438,7 @@ public class GiveChange {
 		//throws exception if totalOwed is less than 0.00
 		if (totalOwed < 0.00) {
 			throw new SimulationException(
-					new IllegalArgumentException("totalOwed cannot be less than nothing"));
+				new IllegalArgumentException("totalOwed cannot be less than nothing"));
 		}
 		this.totalOwed = totalOwed;
 	}

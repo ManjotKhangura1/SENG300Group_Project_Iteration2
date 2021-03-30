@@ -1,57 +1,114 @@
-import static org.junit.Assert.assertEquals;
-
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Currency;
+import java.util.HashMap;
 
-import org.junit.Before;
-import org.junit.Test;
 import org.lsmr.selfcheckout.Card;
-import org.lsmr.selfcheckout.Coin;
-import org.lsmr.selfcheckout.Item;
-import org.lsmr.selfcheckout.devices.OverloadException;
+import org.lsmr.selfcheckout.Card.CardData;
+import org.lsmr.selfcheckout.devices.AbstractDevice;
+import org.lsmr.selfcheckout.devices.CardReader;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
-import org.lsmr.selfcheckout.devices.SimulationException;
+import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
+import org.lsmr.selfcheckout.devices.listeners.CardReaderListener;
+import org.lsmr.selfcheckout.products.BarcodedProduct;
 
-public class ScansMembershipCardTest {
+public class ScansMembershipCard { //through card reader
+
+	public SelfCheckoutStation aSelfCheckoutStation;
 	
-	Currency currency= Currency.getInstance("CAD");
-	int[] bankNoteDenominations= {5,10,20,50,100};
-	BigDecimal[] coinDenominations= {new BigDecimal(0.01), new BigDecimal(0.05),
-			 new BigDecimal(0.1),new BigDecimal(0.25), new BigDecimal(0.50)};
-	int scaleMaximumWeight= 1000;
-	int scaleSensitivity=1;
+	//initially card data is not read
+	public boolean cardDataIsRead=false;
+	public boolean cardIsSwiped=false;
 	
-	SelfCheckoutStation scs = new SelfCheckoutStation(currency, bankNoteDenominations,
-			coinDenominations, scaleMaximumWeight, scaleSensitivity);
+	public CardData data;
 	
-	ScansMembershipCard scanMembership = new ScansMembershipCard(scs);
+	Card validCard1 = new Card("Membership", "1234567", "A Name", null, null, true, false);
+	
+	Card validCard2 = new Card("Membership", "2345678", "A Name", null, null, true, false);
+	//creating a database with valid card numbers
+	public  HashMap<String, Card> validMembershipData= new HashMap<>();
+
+	//read the card using class CardReader which makes use of CardReaderListener
+	//different ways to read card: tap, swipe, insert
+	//SelfCheckoutstation has a cardReader so use everything off that
+	//all functions in CardReader basically just read the card using different methods & return the data
+	
+	public CardReaderListener crl = new CardReaderListener() {
 		
-	@Test
-	public void testTapMembershipCard_Valid() {
+		@Override
+		public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+		// TODO Auto-generated method stub	
+			}
+		@Override
+		public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+			// TODO Auto-generated method stub	
+		}
+		@Override
+		public void cardInserted(CardReader reader) {
+			// TODO Auto-generated method stub	
+		}
+		@Override
+		public void cardRemoved(CardReader reader) {
+			// TODO Auto-generated method stub	
+		}
+		@Override
+		public void cardTapped(CardReader reader) {
+			// TODO Auto-generated method stub	
+		}
+		@Override
+		public void cardSwiped(CardReader reader) {
+			cardIsSwiped=true;
+		}
 		
+		@Override
+		public void cardDataRead(CardReader reader, CardData data) {
+			cardDataIsRead=true;
+			
+		}	  
+	  };
+	  
+	
+	//constructor for use case
+	//passing instance of self checkout station because all operations are done through it
+	public ScansMembershipCard(SelfCheckoutStation station) {
 		
-		Card validCard = new Card("Membership", "1234567", "A Name", null, null, true, false);
+		aSelfCheckoutStation= station;
 		
-		scanMembership.tapMembershipCard(validCard);
+		//registering card reader and listener
+		aSelfCheckoutStation.cardReader.register(crl);
 		
-		boolean actual= scanMembership.cardDataIsRead;
-		boolean expected= true;
+		//initializing database
+		 validMembershipData.put("1234567", validCard1);
+		 validMembershipData.put("2345678", validCard2);
 		
 	}
 	
-	@Test
-	public void testTapMembershipCard_Invalid() {
+
+	//swipe a valid membership card and the data will be read and returned
+	public CardData swipeMembershipCard(Card aMembershipCard, BufferedImage aSignature) {
+		try {
+			String memNumber = (aMembershipCard.swipe().getNumber());
+			
+			if(validMembershipData.containsKey(memNumber)){
+				try {
+					data=aSelfCheckoutStation.cardReader.swipe(aMembershipCard, aSignature);
+					
+					if(cardDataIsRead==true) {
+						return data;
+					}
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+					}
 		
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		
-		Card validCard = new Card("Membership", "asdkjsdfjhs", "askjd", null, null, true, false);
-		
-		scanMembership.tapMembershipCard(validCard);
-		
-		boolean actual= scanMembership.cardDataIsRead;
-		boolean expected= false;
-		
+			return null;		
 	}
 	
 }

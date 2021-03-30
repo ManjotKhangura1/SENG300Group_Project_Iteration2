@@ -16,19 +16,17 @@ public class ScansMembershipCard { //through card reader
 
 	public SelfCheckoutStation aSelfCheckoutStation;
 	
-	
 	//initially card data is not read
 	public boolean cardDataIsRead=false;
+	public boolean cardIsSwiped=false;
 	
 	public CardData data;
 	
-	Card validCard1 = new Card("Membership", "1234567", "A Name", null, null, false, false);
+	Card validCard1 = new Card("Membership", "1234567", "A Name", null, null, true, false);
 	
-	Card validCard2 = new Card("Membership", "2345678", "A Name", null, null, false, false);
+	Card validCard2 = new Card("Membership", "2345678", "A Name", null, null, true, false);
 	//creating a database with valid card numbers
 	public  HashMap<String, Card> validMembershipData= new HashMap<>();
-
-	
 
 	//read the card using class CardReader which makes use of CardReaderListener
 	//different ways to read card: tap, swipe, insert
@@ -59,7 +57,7 @@ public class ScansMembershipCard { //through card reader
 		}
 		@Override
 		public void cardSwiped(CardReader reader) {
-			// TODO Auto-generated method stub	
+			cardIsSwiped=true;
 		}
 		
 		@Override
@@ -68,7 +66,6 @@ public class ScansMembershipCard { //through card reader
 			
 		}	  
 	  };
-	  
 	  
 	
 	//constructor for use case
@@ -86,65 +83,32 @@ public class ScansMembershipCard { //through card reader
 		
 	}
 	
-	
-	
-	//tap membership card and the data will be read and returned
-	public CardData tapMembershipCard(Card aMembershipCard) {
-		if(validMembershipData.containsKey(aMembershipCard)) {
-			try {
-				data= aSelfCheckoutStation.cardReader.tap(aMembershipCard);
-				
-				cardDataIsRead=true;
-				
-				if(cardDataIsRead==true) {
-					return data;
-				}
-					
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		return null;
-	}
-	//swipe membership card and the data will be read and returned
+
+	//swipe a valid membership card and the data will be read and returned
 	public CardData swipeMembershipCard(Card aMembershipCard, BufferedImage aSignature) {
-		
 		try {
-			data=aSelfCheckoutStation.cardReader.swipe(aMembershipCard, aSignature);
+			String memNumber = (aMembershipCard.swipe().getNumber());
 			
-			if(cardDataIsRead==true) {
-				return data;
-			}
-			
-		} catch (IOException e) {
+			if(validMembershipData.containsKey(memNumber)){
+				try {
+					data=aSelfCheckoutStation.cardReader.swipe(aMembershipCard, aSignature);
+					
+					if(cardDataIsRead==true) {
+						return data;
+					}
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+					}
+		
+		} catch (IOException e1) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e1.printStackTrace();
 		}
-	
-			return null;
+		
+			return null;		
 	}
 	
-	//insert membership card and the data will be read and returned
-	public CardData insertMembershipCard(Card aMembershipCard, String aPin) {
-	
-		try {
-			data=aSelfCheckoutStation.cardReader.insert(aMembershipCard, aPin);
-			
-			if(cardDataIsRead==true) {
-				
-				aSelfCheckoutStation.cardReader.remove();
-				
-				return data;
-			}
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return null;	
-}
-	  
 }

@@ -38,51 +38,12 @@ public class GiveChange {
 	public boolean banknoteSlotEnabled;
 	public boolean banknoteRemoved;
 	public boolean coinTrayEnabled;
+	public boolean failedToComplete;
 	private Banknote currentBanknote; 
 	private Coin currentCoin;
 
 	/**
-	 * Give Change constructor that gives change if only banknotes were used to pay
-	 * @param station The SelfCheckoutStation that is currently being used
-	 * @param currency The kind of currency permitted
-	 * @param total The total cost of the transaction
-	 * @param payWithBanknote The PayWithBanknote instance used to pay
-	 */
-	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithBanknote payWithBanknote) {
-		setStation(station);
-		setCurrency(currency);
-		//grabbing the denominations values
-		this.banknoteDenominations = station.banknoteDenominations;
-		this.coinDenominations = station.coinDenominations;
-		setTotalOwed(totalOwed);
-		setPayWithBanknote(payWithBanknote);
-		setTotalPaid(payWithBanknote.getTotalPaid());
-		startListener();
-		banknoteSlotEnabled = true;
-	}
-
-	/**
-	 * Give Change constructor that gives change if only coins were used to pay
-	 * @param station station The SelfCheckoutStation that is currently being used
-	 * @param currency The kind of currency permitted
-	 * @param total The total cost of the transaction
-	 * @param payWithCoin The PayWithCoin instance used to pay
-	 */
-	public GiveChange(SelfCheckoutStation station, Currency currency, double totalOwed, PayWithCoin payWithCoin) {
-		setStation(station);
-		setCurrency(currency);
-		//grabbing the denominations values
-		this.banknoteDenominations = station.banknoteDenominations;
-		this.coinDenominations = station.coinDenominations;
-		setTotalOwed(totalOwed);
-		setPayWithCoin(payWithCoin);
-		setTotalPaid(payWithCoin.getcoinsPaid());
-		startListener();
-		coinTrayEnabled = true;
-	}
-
-	/**
-	 * Give Change constructor that gives change if banknotes and coins were used to pay
+	 * Give Change constructor 
 	 * @param station station The SelfCheckoutStation that is currently being used
 	 * @param currency The kind of currency permitted
 	 * @param total The total cost of the transaction
@@ -148,9 +109,16 @@ public class GiveChange {
 				try {
 					station.banknoteDispensers.get(banknoteDenominations[i]).emit();
 					station.banknoteOutput.emit(currentBanknote);
+					//This is something that would not normally need to be in the code but do to hardware limitations and 
+					//a lack of an actual user, the banknote will need to be removed by the system
+					station.banknoteOutput.removeDanglingBanknote();
 					changeLeftToDispense = changeLeftToDispense - banknoteDenominations[i];
-				} catch (SimulationException | DisabledException | EmptyException | OverloadException e) {
+				} catch (SimulationException | DisabledException | OverloadException e) {
 					throw new SimulationException(e);
+				} catch (EmptyException e) {
+					//if the denomination you want is empty, continue going through the loop because
+					//changeLeftToDispense wouldn't have updated and the next denomination will handle the amount still owed
+					continue;
 				}				
 			}
 		}
@@ -165,10 +133,36 @@ public class GiveChange {
 					station.coinDispensers.get(coinDenominations.get(i)).emit();
 					station.coinTray.accept(currentCoin);
 					changeLeftToDispense = changeLeftToDispense - coinDenominations.get(i).doubleValue();
-				} catch (OverloadException | DisabledException | EmptyException e) {
+				} catch (OverloadException | DisabledException e) {
 					throw new SimulationException(e);
+				} catch (EmptyException e) {
+					//if the denomination you want is empty, continue going through the loop because
+					//changeLeftToDispense wouldn't have updated and the next denomination will handle the amount still owed
+					continue;
 				}
 			}
+		}
+		
+		//if the value we still have to give back to users is less than our lowest denomination and isn't 0.00, then we round up to the 
+		//lowest denomination to give them the change, if system can't provide the change, change the boolean value letting the system
+		//know the transaction wasn't completed and print out the issue
+		if(changeLeftToDispense < coinDenominations.get(0).doubleValue() && changeLeftToDispense != 0.00) {
+			try {
+				station.coinDispensers.get(coinDenominations.get(0)).emit();
+			} catch (OverloadException | DisabledException e) {
+				throw new SimulationException(e);
+			} catch (EmptyException e) {
+				failedToComplete = true;
+				System.out.println("Could not finish giving change, please notify staff");
+				throw new SimulationException(e);
+			}
+		//if the amount still owed to the user is not 0.00, change the boolean value letting the system know the
+		//transaction wasn't completed and print out the issue
+		}else if(changeLeftToDispense > 0.00){
+			failedToComplete = true;
+			System.out.println("Could not finish giving change, please notify staff");
+		}else {
+			failedToComplete = false;
 		}
 	}
 	
@@ -509,6 +503,14 @@ public class GiveChange {
 	 */
 	public boolean getBanknoteRemoved() {
 		return banknoteRemoved;
+	}
+	
+	/**
+	 * Gets the failedToComplete boolean
+	 * @return failedToComplete The failedToComplete boolean
+	 */
+	public boolean getFailedToComplete() {
+		return failedToComplete;
 	}
 
 }

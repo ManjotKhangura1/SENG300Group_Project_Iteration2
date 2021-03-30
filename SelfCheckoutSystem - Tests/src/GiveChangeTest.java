@@ -45,10 +45,10 @@ public class GiveChangeTest {
 	}
 
 	@Test //Tests if the proper exception is thrown when constructor is called with a null station
-	public void testBanknoteConstructorNullStation() {
+	public void testConstructorNullStation() {
 		try {
 			double totalOwed = 0.01;
-			GiveChange giveChange = new GiveChange(null, currency, totalOwed, payWithBanknote);
+			GiveChange giveChange = new GiveChange(null, currency, totalOwed, payWithBanknote, payWithCoin);
 			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
 		} catch (Exception e) {
 			assertTrue("Simulation Exception thrown because null station provided", e instanceof SimulationException);
@@ -56,10 +56,10 @@ public class GiveChangeTest {
 	}
 	
 	@Test //Tests if the proper exception is thrown when constructor is called with a null currency
-	public void testBanknoteConstructorNullCurrency() {
+	public void testConstructorNullCurrency() {
 		try {
 			double totalOwed = 0.01;
-			GiveChange giveChange = new GiveChange(station, null, totalOwed, payWithBanknote);
+			GiveChange giveChange = new GiveChange(station, null, totalOwed, payWithBanknote, payWithCoin);
 			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
 		} catch (Exception e) {
 			assertTrue("Simulation Exception thrown because null currency provided", e instanceof SimulationException);
@@ -67,29 +67,59 @@ public class GiveChangeTest {
 	}
 	
 	@Test //Tests if the proper exception is thrown when constructor is called with a negative totalOwed
-	public void testBanknoteConstructorNegativeTotalOwed() {
+	public void testConstructorNegativeTotalOwed() {
 		try {
 			double totalOwed = -0.01;
-			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote);
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
 			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
 		} catch (Exception e) {
 			assertTrue("Simulation Exception thrown because negative totalOwed provided", e instanceof SimulationException);
 		}
 	}
+	
+	@Test //Tests if the proper exception is thrown when constructor is called with a null PayWithBanknote
+	public void testConstructorNullPayWithBanknote() {
+		try {
+			double totalOwed = 0.01;
+			payWithBanknote = null;
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
+		} catch (Exception e) {
+			assertTrue("Simulation Exception thrown because null payWithBanknote provided", e instanceof SimulationException);
+		}
+	}
+	
+	@Test //Tests if the proper exception is thrown when constructor is called with a null PayWithCoin
+	public void testConstructorNullPayWithBankCoin() {
+		try {
+			double totalOwed = 0.01;
+			payWithCoin = null;
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
+		} catch (Exception e) {
+			assertTrue("Simulation Exception thrown because null payWithCoin provided", e instanceof SimulationException);
+		}
+	}
 
-	@Test
-	public void testGiveChangeSelfCheckoutStationCurrencyDoublePayWithCoin() {
-		fail("Not yet implemented");
+	@Test //Testing normal use
+	public void testConstructor() {
+		try {
+			double totalOwed = 0.01;
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			assertNotNull(giveChange);
+		} catch (Exception e) {
+			//fails if exception thrown because this is a valid station
+			fail("Exception thrown for valid code");
+		}
 	}
 
 	@Test
-	public void testGiveChangeSelfCheckoutStationCurrencyDoublePayWithBanknotePayWithCoin() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testCalculateChange() {
-		fail("Not yet implemented");
+	public void testCalculateChangeNoChange() {
+		double totalOwed = 5.00;
+		payWithBanknote.pay(banknote);
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		
+		giveChange.calculateChange();
 	}
 
 	@Test

@@ -235,6 +235,7 @@ public class GiveChangeTest {
 			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
 		} catch (Exception e) {
 			//fails if exception thrown because this is a valid station
+			//Should always fail (from last iteration it always failed). Might be due to new hardware being made.
 			assertTrue("Simulation Exception thrown because banknote dispenser is disabled", e instanceof SimulationException);
 		}
 	}

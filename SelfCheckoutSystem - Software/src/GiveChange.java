@@ -35,12 +35,10 @@ public class GiveChange {
 	public double change;
 	public int[] banknoteDenominations;
 	public List<BigDecimal> coinDenominations;
-	public boolean banknoteSlotEnabled;
-	public boolean banknoteRemoved;
-	public boolean coinTrayEnabled;
+	public boolean banknoteSlotEnabled = true;
+	public boolean banknoteRemoved = true;
+	public boolean coinTrayEnabled = true;
 	public boolean failedToComplete;
-	private Banknote currentBanknote; 
-	private Coin currentCoin;
 
 	/**
 	 * Give Change constructor 
@@ -82,37 +80,36 @@ public class GiveChange {
 	 * Dispenses the change owed to the user
 	 * @throws SimulationException If there is a dangling banknote in the slot
 	 * @throws SimulationException If the banknote slot is disabled
-	 * @throws SimulationException If no banknotes are present in the dispenser to release 
 	 * @throws SimulationException If the output channel is unable to accept another banknote
 	 * @throws SimulationException If the coin tray overflows
 	 * @throws SimulationException If the coin tray is disabled
 	 * @throws SimulationException If no coins are present in the dispenser to release 
+	 * @throws SimulationException If a banknote dispenser is disabled
+	 * @throws SimulationException If a coin dispenser is disabled
 	 * 
 	 */
 	public void dispense() {
-		double changeLeftToDispense;
 		int amountToDispense;
 		
 		calculateChange();
-		changeLeftToDispense = change;
 		
 		//sort the denominations to be greatest to least
 		Arrays.sort(banknoteDenominations);
 		Collections.sort(coinDenominations);
+		
+		if(banknoteSlotEnabled == false || coinTrayEnabled == false){
+			throw new SimulationException(new DisabledException());
+		}
 			
 		//calculates the amount of each type of banknote to dispense and tries to dispense it
 		//starts with the largest denomination
-		for(int i = banknoteDenominations.length - 1; i < 0; i--) {
-			amountToDispense = (int) Math.floor(changeLeftToDispense / banknoteDenominations[i]);
+		for(int i = banknoteDenominations.length - 1; i >= 0; i--) {
+			amountToDispense = (int) Math.floor(change / banknoteDenominations[i]);
 			//dispenses the amount needed of the current denomination
 			for(int j = 0; j < amountToDispense; j++) {
 				try {
 					station.banknoteDispensers.get(banknoteDenominations[i]).emit();
-					station.banknoteOutput.emit(currentBanknote);
-					//This is something that would not normally need to be in the code but do to hardware limitations and 
-					//a lack of an actual user, the banknote will need to be removed by the system
-					station.banknoteOutput.removeDanglingBanknote();
-					changeLeftToDispense = changeLeftToDispense - banknoteDenominations[i];
+					change = BigDecimal.valueOf(change).subtract(BigDecimal.valueOf(banknoteDenominations[i])).doubleValue(); 
 				} catch (SimulationException | DisabledException | OverloadException e) {
 					throw new SimulationException(e);
 				} catch (EmptyException e) {
@@ -122,23 +119,24 @@ public class GiveChange {
 				}				
 			}
 		}
-		
 		//calculates the amount of each type of coin to dispense and tries to dispense it
 		//starts with the largest denominations
-		for(int i = coinDenominations.size() - 1; i < 0; i--) {
-			amountToDispense = (int) Math.floor(changeLeftToDispense / coinDenominations.get(i).doubleValue());
-			//dispenses the amount needed of the current denomination
-			for(int j = 0; j < amountToDispense; j++) {
-				try {
-					station.coinDispensers.get(coinDenominations.get(i)).emit();
-					station.coinTray.accept(currentCoin);
-					changeLeftToDispense = changeLeftToDispense - coinDenominations.get(i).doubleValue();
-				} catch (OverloadException | DisabledException e) {
-					throw new SimulationException(e);
-				} catch (EmptyException e) {
-					//if the denomination you want is empty, continue going through the loop because
-					//changeLeftToDispense wouldn't have updated and the next denomination will handle the amount still owed
-					continue;
+		for(int i = coinDenominations.size() - 1; i >= 0; i--) {
+			if(change != 0) {
+				
+				amountToDispense = (int) Math.floor(change / coinDenominations.get(i).doubleValue());
+				//dispenses the amount needed of the current denomination
+				for(int j = 0; j < amountToDispense; j++) {
+					try {
+						station.coinDispensers.get(coinDenominations.get(i)).emit();
+						change = BigDecimal.valueOf(change).subtract(coinDenominations.get(i)).doubleValue(); 
+					} catch (OverloadException | DisabledException e) {
+						throw new SimulationException(e);
+					} catch (EmptyException e) {
+						//if the denomination you want is empty, continue going through the loop because
+						//changeLeftToDispense wouldn't have updated and the next denomination will handle the amount still owed
+						continue;
+					}
 				}
 			}
 		}
@@ -146,7 +144,7 @@ public class GiveChange {
 		//if the value we still have to give back to users is less than our lowest denomination and isn't 0.00, then we round up to the 
 		//lowest denomination to give them the change, if system can't provide the change, change the boolean value letting the system
 		//know the transaction wasn't completed and print out the issue
-		if(changeLeftToDispense < coinDenominations.get(0).doubleValue() && changeLeftToDispense != 0.00) {
+		if(change < coinDenominations.get(0).doubleValue() && change != 0.00) {
 			try {
 				station.coinDispensers.get(coinDenominations.get(0)).emit();
 			} catch (OverloadException | DisabledException e) {
@@ -158,7 +156,7 @@ public class GiveChange {
 			}
 		//if the amount still owed to the user is not 0.00, change the boolean value letting the system know the
 		//transaction wasn't completed and print out the issue
-		}else if(changeLeftToDispense > 0.00){
+		}else if(change > 0.00){
 			failedToComplete = true;
 			System.out.println("Could not finish giving change, please notify staff");
 		}else {
@@ -187,8 +185,7 @@ public class GiveChange {
 			
 			@Override
 			public void banknoteRemoved(BanknoteSlot slot) {
-				banknoteRemoved = true;
-				
+							
 			}
 			
 			@Override
@@ -199,8 +196,7 @@ public class GiveChange {
 			
 			@Override
 			public void banknoteEjected(BanknoteSlot slot) {
-				banknoteRemoved = false;
-				
+							
 			}
 		});
 		
@@ -224,113 +220,111 @@ public class GiveChange {
 				
 			}
 		});
-		
-		for(int i = 0; i < station.banknoteDispensers.size(); i++) {
-			station.banknoteDispensers.get(banknoteDenominations[i]).register(new BanknoteDispenserListener() {
-				
-				@Override
-				public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void banknotesUnloaded(BanknoteDispenser dispenser, Banknote... banknotes) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void banknotesLoaded(BanknoteDispenser dispenser, Banknote... banknotes) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void banknotesFull(BanknoteDispenser dispenser) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void banknotesEmpty(BanknoteDispenser dispenser) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void banknoteRemoved(BanknoteDispenser dispenser, Banknote banknote) {
-					currentBanknote = banknote;
-					
-				}
-				
-				@Override
-				public void banknoteAdded(BanknoteDispenser dispenser, Banknote banknote) {
-					// TODO Auto-generated method stub
-					
-				}
-			});
-		}
-		
-		for(int i = 0; i < station.coinDispensers.size(); i++) {
-			station.coinDispensers.get(coinDenominations.get(i)).register(new CoinDispenserListener() {
-				
-				@Override
-				public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void coinsUnloaded(CoinDispenser dispenser, Coin... coins) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void coinsLoaded(CoinDispenser dispenser, Coin... coins) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void coinsFull(CoinDispenser dispenser) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void coinsEmpty(CoinDispenser dispenser) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-				@Override
-				public void coinRemoved(CoinDispenser dispenser, Coin coin) {
-					currentCoin = coin;
-					
-				}
-				
-				@Override
-				public void coinAdded(CoinDispenser dispenser, Coin coin) {
-					// TODO Auto-generated method stub
-					
-				}
-			});
-		}
-		
+//		
+//		for(int i = 0; i < station.banknoteDispensers.size(); i++) {
+//			station.banknoteDispensers.get(banknoteDenominations[i]).register(new BanknoteDispenserListener() {
+//				
+//				@Override
+//				public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void banknotesUnloaded(BanknoteDispenser dispenser, Banknote... banknotes) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void banknotesLoaded(BanknoteDispenser dispenser, Banknote... banknotes) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void banknotesFull(BanknoteDispenser dispenser) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void banknotesEmpty(BanknoteDispenser dispenser) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void banknoteRemoved(BanknoteDispenser dispenser, Banknote banknote) {
+//					
+//				}
+//				
+//				@Override
+//				public void banknoteAdded(BanknoteDispenser dispenser, Banknote banknote) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//			});
+//		}
+//		
+//		for(int i = 0; i < station.coinDispensers.size(); i++) {
+//			station.coinDispensers.get(coinDenominations.get(i)).register(new CoinDispenserListener() {
+//				
+//				@Override
+//				public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void coinsUnloaded(CoinDispenser dispenser, Coin... coins) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void coinsLoaded(CoinDispenser dispenser, Coin... coins) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void coinsFull(CoinDispenser dispenser) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void coinsEmpty(CoinDispenser dispenser) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//				
+//				@Override
+//				public void coinRemoved(CoinDispenser dispenser, Coin coin) {
+//					
+//				}
+//				
+//				@Override
+//				public void coinAdded(CoinDispenser dispenser, Coin coin) {
+//					// TODO Auto-generated method stub
+//					
+//				}
+//			});
+//		}
+//		
 	}
 
 	/**
@@ -450,11 +444,11 @@ public class GiveChange {
 	 * @param totalPaid the given totalPaid
 	 * @throws SimulationException if totalPaid is less than 0.00
 	 */
-	private void setTotalPaid(double totalPaid) {
+	public void setTotalPaid(double totalPaid) {
 		//throws exception if totalOwed is less than 0.00
 		if (totalPaid < 0.00) {
 			throw new SimulationException(
-					new IllegalArgumentException("totalPaid cannot be less than nothing"));
+				new IllegalArgumentException("totalPaid cannot be less than nothing"));
 		}
 		this.totalPaid = totalPaid;
 	}
@@ -476,7 +470,7 @@ public class GiveChange {
 		//throws exception if totalOwed is less than 0.00
 		if (change < 0.00) {
 			throw new SimulationException(
-					new IllegalArgumentException("amount of change to be given cannot be less than nothing"));
+				new IllegalArgumentException("amount of change to be given cannot be less than nothing"));
 		}
 		this.change = change;
 	}

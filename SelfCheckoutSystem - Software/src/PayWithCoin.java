@@ -17,7 +17,7 @@ public class PayWithCoin {
 	public SelfCheckoutStation station;
 
 	// isEnabled is the value representing if the coinValidator is enabled
-	private boolean isEnabled = false;
+	private boolean isEnabled = true;
 	// accepted is the boolean representing if valid coin is detected
 	private boolean accepted = false;
 
@@ -67,14 +67,14 @@ public class PayWithCoin {
 				station.coinSlot.accept(coin);
 				station.coinValidator.accept(coin);
 				station.coinStorage.accept(coin);
-			} catch (DisabledException e) {
+			} catch (DisabledException | OverloadException e) {
 				throw new SimulationException(e);
 			}
 
 			// accepted is the boolean representing if valid coin is detected
 			if (accepted) {
 				updateList(coin);
-				updateCoinsPaid(coin.getValue().intValue());
+				updateCoinsPaid(coin.getValue().doubleValue());
 			}
 		}
 	}
@@ -169,7 +169,7 @@ public class PayWithCoin {
 	 * 
 	 * @param value The amount you want to add
 	 */
-	private void updateCoinsPaid(int value) {
+	private void updateCoinsPaid(double value) {
 		coinsPaid += value;
 	}
 

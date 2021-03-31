@@ -55,7 +55,8 @@ public class PayWithDebitTest {
 				error++;
 			}
 		}
-		assertTrue(error <= 10);	
+		//Delta is 5, accommodating for potential standard deviations. Can still fail because of outliers
+		assertTrue(error <= 15);	
 	}
 	
 
@@ -93,7 +94,8 @@ public class PayWithDebitTest {
 				error++;
 			}
 		}
-		assertTrue(error <= 10);	
+		//Delta is 5, accommodating for potential standard deviations. Can still fail because of outliers
+		assertTrue(error <= 15);	
 	}
 	
 

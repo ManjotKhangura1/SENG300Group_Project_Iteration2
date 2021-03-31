@@ -4,6 +4,17 @@ import org.lsmr.selfcheckout.devices.*;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
 import org.lsmr.selfcheckout.devices.listeners.ElectronicScaleListener;
 
+/**
+ * This control software is used when an item is scanned. Once it is scanned, the scanners lock and do not unlock
+ * until the item is put in the bagging area. The weight of the bagging area is compared to the item weight +
+ * the previous weight of the bagging area and if this is what we get then the scanners unlock and we can
+ * go to the next item (if there is a next item). Most of the other cases to fail in putting an item in the
+ * bagging area was covered in the BaggingArea class from iteration 1.
+ * 
+ * @author manjot
+ *
+ */
+
 
 public class FailBagging {
 
@@ -30,17 +41,8 @@ public class FailBagging {
 		//Register the listener
 		this.baggingArea.register(createBaggingListener());
 		
-		try
-		{
-			//Gets current weight of bagging area
-			weightBeforeChange = baggingArea.getCurrentWeight();
-		}
-		catch (Exception e)
-		{
-			System.out.println("Could not get weight of bagging area");
-			e.printStackTrace();
-		}
 	}
+	
 
 	/**
 	 * Getting for checking if scanner is locked
@@ -48,6 +50,11 @@ public class FailBagging {
 	 */
 	public boolean isLock() {
 		return lock;
+	}
+	
+	public void setLock(boolean changeLock)
+	{
+		lock = changeLock;
 	}
 	
 	/**
@@ -81,6 +88,9 @@ public class FailBagging {
 					}
 				}
 				
+				//Gets current weight of bagging area
+				weightBeforeChange = weightInGrams;
+				
 			}
 
 			@Override
@@ -102,9 +112,11 @@ public class FailBagging {
 	/**
 	 * Locks the scanners
 	 * @param item - item we are looking for to put in bagging area
+	 * @throws OverloadException 
 	 */
-	public void lockScan(Item item)
+	public void lockScan(Item item) throws OverloadException
 	{
+		weightBeforeChange = baggingArea.getCurrentWeight();
 		lock = true;
 		itemWeight = item.getWeight();
 		selfCheckout.mainScanner.disable();

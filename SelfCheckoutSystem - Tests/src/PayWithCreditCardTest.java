@@ -15,6 +15,144 @@ import org.lsmr.selfcheckout.external.CardIssuer;
 public class PayWithCreditCardTest {
 	
 	
+	
+	//tests disabled system
+		@Test
+		public void testDisabledTap() {
+			//SETUP.......................................................................................
+			SelfCheckoutStation testStation;
+			CardIssuer testIssuer;
+
+			//create a self checkout station and the components necessary to create it
+			Currency currency = Currency.getInstance("CAD");
+			int[] noteDenominations = {5,10,20,50,100};
+			BigDecimal[] coinDenomonations = {BigDecimal.valueOf(0.05) , BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25), 
+					BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0)};
+			int maxWeight = 23000;
+			int scaleSensitivity = 10;
+			testStation = new SelfCheckoutStation(currency, noteDenominations, coinDenomonations, maxWeight,scaleSensitivity);
+			
+			
+			//create an issuer to manage payments
+			testIssuer = new CardIssuer("testIssuer");
+			Calendar testCalendar =  Calendar.getInstance();
+			testCalendar.set(Calendar.YEAR, 2030);
+			testIssuer.addCardData("111111", "Person One", testCalendar, "111", new BigDecimal("1000"));
+			testIssuer.addCardData("222222", "Person Two", testCalendar, "222", new BigDecimal("5"));
+			testIssuer.addCardData("333333", "Person Three", testCalendar, "333", new BigDecimal("10"));
+			//.............................................................................................
+			
+				
+			Card testCard = new Card("credit", "111111", "Person One", "111", "1234", true, true);
+			PayWithCreditCard creditPayment = new PayWithCreditCard(testStation, testIssuer);
+			creditPayment.checkoutStation.cardReader.disable();
+			for(int i=0; i<100; i++) {
+				try {
+					
+					BigDecimal testPrice = BigDecimal.TEN;
+					creditPayment.payWithTap(testCard, testPrice);
+					
+				}catch(Exception e) {}
+			}
+			
+	
+			assertTrue(creditPayment.amountPaid.compareTo(BigDecimal.ZERO) == 0);
+			assertTrue(!creditPayment.getInProgress());
+			
+		}
+	
+		
+		//tests disabled system
+		@Test
+		public void testDisabledSwipe() {
+			//SETUP.......................................................................................
+			SelfCheckoutStation testStation;
+			CardIssuer testIssuer;
+
+			//create a self checkout station and the components necessary to create it
+			Currency currency = Currency.getInstance("CAD");
+			int[] noteDenominations = {5,10,20,50,100};
+			BigDecimal[] coinDenomonations = {BigDecimal.valueOf(0.05) , BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25), 
+					BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0)};
+			int maxWeight = 23000;
+			int scaleSensitivity = 10;
+			testStation = new SelfCheckoutStation(currency, noteDenominations, coinDenomonations, maxWeight,scaleSensitivity);
+			
+			
+			//create an issuer to manage payments
+			testIssuer = new CardIssuer("testIssuer");
+			Calendar testCalendar =  Calendar.getInstance();
+			testCalendar.set(Calendar.YEAR, 2030);
+			testIssuer.addCardData("111111", "Person One", testCalendar, "111", new BigDecimal("1000"));
+			testIssuer.addCardData("222222", "Person Two", testCalendar, "222", new BigDecimal("5"));
+			testIssuer.addCardData("333333", "Person Three", testCalendar, "333", new BigDecimal("10"));
+			//.............................................................................................
+			
+				
+			Card testCard = new Card("credit", "111111", "Person One", "111", "1234", true, true);
+			PayWithCreditCard creditPayment = new PayWithCreditCard(testStation, testIssuer);
+			creditPayment.checkoutStation.cardReader.disable();
+			for(int i=0; i<100; i++) {
+				try {
+					
+					BigDecimal testPrice = BigDecimal.TEN;
+					creditPayment.payWithSwipe(testCard, testPrice, null);
+					
+				}catch(Exception e) {}
+			}
+			
+	
+			assertTrue(creditPayment.amountPaid.compareTo(BigDecimal.ZERO) == 0);
+			assertTrue(!creditPayment.getInProgress());
+			
+		}
+		
+		//tests disabled system
+		@Test
+		public void testDisabledInsert() {
+			//SETUP.......................................................................................
+			SelfCheckoutStation testStation;
+			CardIssuer testIssuer;
+
+			//create a self checkout station and the components necessary to create it
+			Currency currency = Currency.getInstance("CAD");
+			int[] noteDenominations = {5,10,20,50,100};
+			BigDecimal[] coinDenomonations = {BigDecimal.valueOf(0.05) , BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25), 
+					BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0)};
+			int maxWeight = 23000;
+			int scaleSensitivity = 10;
+			testStation = new SelfCheckoutStation(currency, noteDenominations, coinDenomonations, maxWeight,scaleSensitivity);
+			
+			
+			//create an issuer to manage payments
+			testIssuer = new CardIssuer("testIssuer");
+			Calendar testCalendar =  Calendar.getInstance();
+			testCalendar.set(Calendar.YEAR, 2030);
+			testIssuer.addCardData("111111", "Person One", testCalendar, "111", new BigDecimal("1000"));
+			testIssuer.addCardData("222222", "Person Two", testCalendar, "222", new BigDecimal("5"));
+			testIssuer.addCardData("333333", "Person Three", testCalendar, "333", new BigDecimal("10"));
+			//.............................................................................................
+			
+				
+			Card testCard = new Card("credit", "111111", "Person One", "111", "1234", true, true);
+			PayWithCreditCard creditPayment = new PayWithCreditCard(testStation, testIssuer);
+			creditPayment.checkoutStation.cardReader.disable();
+			for(int i=0; i<100; i++) {
+				try {
+					if(creditPayment.getCurrentAmount()==BigDecimal.ZERO)
+						creditPayment.removeCard();
+					BigDecimal testPrice = BigDecimal.TEN;
+					creditPayment.payWithInsert(testCard, testPrice, "1234");
+					
+				}catch(Exception e) {}
+			}
+			
+	
+			assertTrue(creditPayment.getCurrentAmount().compareTo(BigDecimal.ZERO) == 0);
+			assertTrue(!creditPayment.getInProgress());
+			
+		}
+	
 	//tests a simple valid tap
 	@Test
 	public void testTap() {
@@ -31,6 +169,7 @@ public class PayWithCreditCardTest {
 		int scaleSensitivity = 10;
 		testStation = new SelfCheckoutStation(currency, noteDenominations, coinDenomonations, maxWeight,scaleSensitivity);
 		
+		
 		//create an issuer to manage payments
 		testIssuer = new CardIssuer("testIssuer");
 		Calendar testCalendar =  Calendar.getInstance();
@@ -43,6 +182,7 @@ public class PayWithCreditCardTest {
 			
 		Card testCard = new Card("credit", "111111", "Person One", "111", "1234", true, true);
 		PayWithCreditCard creditPayment = new PayWithCreditCard(testStation, testIssuer);
+		creditPayment.checkoutStation.cardReader.enable();
 		for(int i=0; i<100; i++) {
 			try {
 				
@@ -642,7 +782,7 @@ public class PayWithCreditCardTest {
 		
 		//processes a tap with a card that does not have sufficient funds
 		@Test
-		public void testSwipeInsufficientFunds() {
+		public void testSwipeInsufficientFunds() { 
 			
 			//SETUP.......................................................................................
 			SelfCheckoutStation testStation;
@@ -681,5 +821,47 @@ public class PayWithCreditCardTest {
 			
 		}
 	
+		
+		//make payment when no hold is placed
+		@Test
+		public void testWrongMakePayment() { 
+			
+			//SETUP.......................................................................................
+			SelfCheckoutStation testStation;
+			CardIssuer testIssuer;
+
+			//create a self checkout station and the components necessary to create it
+			Currency currency = Currency.getInstance("CAD");
+			int[] noteDenominations = {5,10,20,50,100};
+			BigDecimal[] coinDenomonations = {BigDecimal.valueOf(0.05) , BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25), 
+					BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0)};
+			int maxWeight = 23000;
+			int scaleSensitivity = 10;
+			testStation = new SelfCheckoutStation(currency, noteDenominations, coinDenomonations, maxWeight,scaleSensitivity);
+			
+			//create an issuer to manage payments
+			testIssuer = new CardIssuer("testIssuer");
+			Calendar testCalendar =  Calendar.getInstance();
+			testCalendar.set(Calendar.YEAR, 2030);
+			testIssuer.addCardData("111111", "Person One", testCalendar, "111", new BigDecimal("1000"));
+			testIssuer.addCardData("222222", "Person Two", testCalendar, "222", new BigDecimal("5"));
+			testIssuer.addCardData("333333", "Person Three", testCalendar, "333", new BigDecimal("10"));
+			//.............................................................................................
+			
+				
+			Card testCard = new Card("credit", "222222", "Person One", "111", "1234", true, true);
+			PayWithCreditCard creditPayment = new PayWithCreditCard(testStation, testIssuer);
+			
+			try{
+				creditPayment.makePayment();
+			}catch(Exception e) {
+				
+			}
+			
+			assertTrue(creditPayment.amountPaid.compareTo(BigDecimal.ZERO) == 0);
+			assertTrue(!creditPayment.getInProgress());
+			
+		}
 
 }
+

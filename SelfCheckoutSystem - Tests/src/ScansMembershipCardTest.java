@@ -1,4 +1,5 @@
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -36,16 +37,21 @@ public class ScansMembershipCardTest {
 	//should access the cardDataRead listener and set cardDataIsRead to true
 	@Test
 	public void testSwipeMembershipCard_Valid() {
-		
 		Card validCard = new Card("Membership", "1234567", "A Name", null, null, false, false);
 		BufferedImage aSignature = new BufferedImage(1,2,3);
 		
-		scanMembership.swipeMembershipCard(validCard, aSignature);
+		for(int i=0;i<1000;i++) {
+			scanMembership.swipeMembershipCard(validCard, aSignature);
+		}
+		
 		
 		boolean actual= scanMembership.cardDataIsRead;
 		boolean expected= true;
 		
 		assertEquals(expected, actual);
+		//Accounting for the probability of failure, added 5% delta 
+		assertTrue(scanMembership.probabilityCounter>=850);
+		
 	}
 	
 	//testing if swipe works with a invalid membership card

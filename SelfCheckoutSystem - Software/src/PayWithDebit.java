@@ -1,3 +1,4 @@
+
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -24,28 +25,40 @@ public class PayWithDebit {
 	}
 	
 	//pay with swipe
-	public void PayWithSwipe(Card card, CardIssuer issuer,  BufferedImage signature, BigDecimal amount) {
+	public void PayWithSwipe(Card card, CardIssuer issuer,  BufferedImage signature, BigDecimal amount)  {
 		try {
 			CardData data = this.checkoutStation.cardReader.swipe(card, signature);
-			HandleDebitHold(data, issuer, amount);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	//pay with tap
-	public void PayWithTap(Card card, CardIssuer issuer, BigDecimal amount) {
-		try {
-			CardData data = this.checkoutStation.cardReader.tap(card);
-			HandleDebitHold(data, issuer, amount);
+			if ( !HandleDebitHold(data, issuer, amount)) {
+				throw new TransactionFailedException("Error when completing transaction");
+			}		
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void PayWithInsert(Card card, CardIssuer issuer, BigDecimal amount, String pin) {
+	//pay with tap
+	public void PayWithTap(Card card, CardIssuer issuer, BigDecimal amount)  {
+		try {
+			CardData data = this.checkoutStation.cardReader.tap(card);
+			if(data == null) {
+				throw new TapEnableException("Tap not enabled");
+			}
+			if ( !HandleDebitHold(data, issuer, amount)) {
+				throw new TransactionFailedException("Error when completing transaction");
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void PayWithInsert(Card card, CardIssuer issuer, BigDecimal amount, String pin)  {
 		try {
 			CardData data = this.checkoutStation.cardReader.insert(card, pin);
-			HandleDebitHold(data, issuer, amount);
+			
+			if ( !HandleDebitHold(data, issuer, amount)) {
+				throw new TransactionFailedException("Error when completing transaction");
+			}
 			this.checkoutStation.cardReader.remove();
 		} catch (IOException e) {
 			this.checkoutStation.cardReader.remove(); 	// Either way if you succeed or fail you have to remove the card
@@ -62,12 +75,16 @@ public class PayWithDebit {
 	 * @param issuer Issuer for the card
 	 * @param amount Amount that you're looking to spend
 	 */
-	private void HandleDebitHold(CardData data, CardIssuer issuer, BigDecimal amount) {
+	private boolean HandleDebitHold(CardData data, CardIssuer issuer, BigDecimal amount) {
 		int holdNumber = issuer.authorizeHold(data.getNumber(), amount);
 		if (holdNumber != -1) {
-			issuer.postTransaction(data.getNumber(), holdNumber, amount);
+			return issuer.postTransaction(data.getNumber(), holdNumber, amount);
+			
 		} else {
-			issuer.releaseHold(data.getNumber(), holdNumber);
+			return issuer.releaseHold(data.getNumber(), holdNumber);
 		}
 	}
 }
+
+
+

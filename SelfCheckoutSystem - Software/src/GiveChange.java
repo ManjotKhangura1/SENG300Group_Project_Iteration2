@@ -104,26 +104,36 @@ public class GiveChange {
 		//calculates the amount of each type of banknote to dispense and tries to dispense it
 		//starts with the largest denomination
 		for(int i = banknoteDenominations.length - 1; i >= 0; i--) {
-			amountToDispense = (int) Math.floor(change / banknoteDenominations[i]);
-			//dispenses the amount needed of the current denomination
-			for(int j = 0; j < amountToDispense; j++) {
-				try {
-					station.banknoteDispensers.get(banknoteDenominations[i]).emit();
-					change = BigDecimal.valueOf(change).subtract(BigDecimal.valueOf(banknoteDenominations[i])).doubleValue(); 
-				} catch (SimulationException | DisabledException | OverloadException e) {
-					throw new SimulationException(e);
-				} catch (EmptyException e) {
-					//if the denomination you want is empty, continue going through the loop because
-					//changeLeftToDispense wouldn't have updated and the next denomination will handle the amount still owed
-					continue;
-				}				
+			if(change != 0) {
+				amountToDispense = (int) Math.floor(change / banknoteDenominations[i]);
+				//dispenses the amount needed of the current denomination
+				for(int j = 0; j < amountToDispense; j++) {
+					try {
+						station.banknoteDispensers.get(banknoteDenominations[i]).emit();
+						change = BigDecimal.valueOf(change).subtract(BigDecimal.valueOf(banknoteDenominations[i])).doubleValue(); 
+
+						//manually removing this for now due to hardware limitations. We also don't have a user to do this at the moment
+						station.banknoteOutput.removeDanglingBanknote();
+						
+						//waits until the banknote was removed 
+						while(banknoteRemoved = false) {
+							
+						}
+					} catch (SimulationException | DisabledException | OverloadException e) {
+						throw new SimulationException(e);
+					} catch (EmptyException e) {
+						//if the denomination you want is empty, continue going through the loop because
+						//changeLeftToDispense wouldn't have updated and the next denomination will handle the amount still owed
+						continue;
+					}				
+				}
 			}
 		}
+		
 		//calculates the amount of each type of coin to dispense and tries to dispense it
 		//starts with the largest denominations
 		for(int i = coinDenominations.size() - 1; i >= 0; i--) {
 			if(change != 0) {
-				
 				amountToDispense = (int) Math.floor(change / coinDenominations.get(i).doubleValue());
 				//dispenses the amount needed of the current denomination
 				for(int j = 0; j < amountToDispense; j++) {
@@ -147,6 +157,7 @@ public class GiveChange {
 		if(change < coinDenominations.get(0).doubleValue() && change != 0.00) {
 			try {
 				station.coinDispensers.get(coinDenominations.get(0)).emit();
+				failedToComplete = false;
 			} catch (OverloadException | DisabledException e) {
 				throw new SimulationException(e);
 			} catch (EmptyException e) {
@@ -185,7 +196,7 @@ public class GiveChange {
 			
 			@Override
 			public void banknoteRemoved(BanknoteSlot slot) {
-							
+				banknoteRemoved = true;
 			}
 			
 			@Override
@@ -196,7 +207,7 @@ public class GiveChange {
 			
 			@Override
 			public void banknoteEjected(BanknoteSlot slot) {
-							
+				banknoteRemoved = false;
 			}
 		});
 		
@@ -442,14 +453,8 @@ public class GiveChange {
 	/**
 	 * Sets the totalPaid to given totalPaid after checking if given is valid
 	 * @param totalPaid the given totalPaid
-	 * @throws SimulationException if totalPaid is less than 0.00
 	 */
-	public void setTotalPaid(double totalPaid) {
-		//throws exception if totalOwed is less than 0.00
-		if (totalPaid < 0.00) {
-			throw new SimulationException(
-				new IllegalArgumentException("totalPaid cannot be less than nothing"));
-		}
+	private void setTotalPaid(double totalPaid) {
 		this.totalPaid = totalPaid;
 	}
 	

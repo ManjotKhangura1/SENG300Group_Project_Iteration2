@@ -260,7 +260,7 @@ public class GiveChangeTest {
 		}
 	}
 	
-	@Test //Testing system when a needed denomination is empty
+	@Test //Testing system when a needed denomination is empty - banknote
 	public void testDispenseBanknoteEmpty() {
 		try {			
 			double totalOwed = 2.00;
@@ -270,21 +270,128 @@ public class GiveChangeTest {
 			coin = new Coin(BigDecimal.valueOf(2.0), currency);
 			payWithCoin.pay(coin);
 			
-			
 			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
-			station.banknoteOutput.removeDanglingBanknote();
+			
+			giveChange.getStation().banknoteDispensers.get(10).unload();
 			giveChange.dispense();
 			
-			//if dispense worked correctly, change variable should be updated to not owe the user
-			double expected = 0.00;
+			boolean expected = false;
 			
-			assertEquals(expected, giveChange.getChange(),0.00);
+			assertEquals(expected, giveChange.getFailedToComplete());
 		} catch (Exception e) {
 			//fails if exception thrown because this is a valid station
-			
 			fail("Exception thrown for valid code with");
 		}
+	}
+	
+	@Test //Testing system when a needed denomination is empty - coin
+	public void testDispenseCoinEmpty() {
+		try {			
+			double totalOwed = 2.00;
+			
+			banknote = new Banknote(5, currency);
+			payWithBanknote.pay(banknote);
 		
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			
+			giveChange.getStation().coinDispensers.get(BigDecimal.valueOf(2.0)).unload();
+			giveChange.dispense();
+			
+			boolean expected = false;
+			
+			assertEquals(expected, giveChange.getFailedToComplete());
+		} catch (Exception e) {
+			fail("Exception thrown for valid code with");
+		}
+	}
+	
+	@Test //Testing system when an amount less than our lowest denomination is needed
+	public void testDispenseRound() {
+		try {			
+			double totalOwed = 2.99;
+			
+			banknote = new Banknote(5, currency);
+			payWithBanknote.pay(banknote);
+		
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			giveChange.dispense();
+			
+			boolean expected = false;
+			
+			assertEquals(expected, giveChange.getFailedToComplete());
+		} catch (Exception e) {
+			fail("Exception thrown for valid code with");
+		}
+	}
+	
+	@Test //Testing system when an amount less than our lowest denomination is needed and amount needed for rounding is empty
+	public void testDispenseRoundEmpty() {
+		try {			
+			double totalOwed = 2.99;
+			
+			banknote = new Banknote(5, currency);
+			payWithBanknote.pay(banknote);
+		
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			giveChange.getStation().coinDispensers.get(BigDecimal.valueOf(0.05)).unload();
+			giveChange.dispense();
+	
+			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
+		} catch (Exception e) {
+			assertTrue("Simulation Exception thrown because coin dispenser is unloaded", e instanceof SimulationException);
+		}
+	}
+	
+	@Test //Testing system when an amount less than our lowest denomination is needed and amount needed for rounding is disabled
+	public void testDispenseRoundDisabled() {
+		try {			
+			double totalOwed = 2.99;
+			
+			banknote = new Banknote(5, currency);
+			payWithBanknote.pay(banknote);
+		
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			giveChange.getStation().coinDispensers.get(BigDecimal.valueOf(0.05)).disable();
+			giveChange.dispense();
+	
+			fail("Should have thrown exception"); //fail because an exception should have been thrown and thus should not have reached this line
+		} catch (Exception e) {
+			assertTrue("Simulation Exception thrown because coin dispenser is disabled", e instanceof SimulationException);
+		}
+	}
+	
+	@Test //Testing system when there is no money loaded into dispensers
+	public void testDispenseEmpty() {
+		try {			
+			double totalOwed = 2.99;
+			
+			banknote = new Banknote(5, currency);
+			payWithBanknote.pay(banknote);
+		
+			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+			
+			//lists of denominations
+			int[] noteDenominations = { 5, 10, 20, 50, 100 };
+			BigDecimal[] coinDenominations = { BigDecimal.valueOf(0.05), BigDecimal.valueOf(0.10), BigDecimal.valueOf(0.25),
+					BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0) };
+			
+			//unload all dispensers
+			for(int i = 0; i < station.banknoteDispensers.size(); i++) {			
+				station.banknoteDispensers.get(noteDenominations[i]).unload();
+			}
+			
+			for(int i = 0; i < station.coinDispensers.size(); i++) {
+				station.coinDispensers.get(coinDenominations[i]).unload();			
+			}
+			
+			giveChange.dispense();
+	
+			boolean expected = true;
+			
+			assertEquals(expected, giveChange.getFailedToComplete());
+		} catch (Exception e) {
+			fail("Exception thrown for valid code with");
+		}
 	}
 	
 	@Test //Testing normal function - banknote only change
@@ -299,16 +406,12 @@ public class GiveChangeTest {
 			
 			
 			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
-			station.banknoteOutput.removeDanglingBanknote();
 			giveChange.dispense();
 			
-			//if dispense worked correctly, change variable should be updated to not owe the user
-			double expected = 0.00;
+			boolean expected = false;
 			
-			assertEquals(expected, giveChange.getChange(),0.00);
+			assertEquals(expected, giveChange.getFailedToComplete());
 		} catch (Exception e) {
-			//fails if exception thrown because this is a valid station
-			
 			fail("Exception thrown for valid code with");
 		}
 		
@@ -325,18 +428,16 @@ public class GiveChangeTest {
 			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
 			giveChange.dispense();
 			
-			//if dispense worked correctly, change variable should be updated to not owe the user
-			double expected = 0.00;
+			boolean expected = false;
 			
-			assertEquals(expected, giveChange.getChange(),0.00);
+			assertEquals(expected, giveChange.getFailedToComplete());
 		} catch (Exception e) {
-			//fails if exception thrown because this is a valid station
 			fail("Exception thrown for valid code");
 		}
 		
 	}
 	
-	@Test //Testing normal function - banknote and coin only change
+	@Test //Testing normal function - banknote and coin change
 	public void testDispense() {
 		try {			
 			double totalOwed = 2.05;
@@ -348,24 +449,86 @@ public class GiveChangeTest {
 			
 			
 			GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
-			station.banknoteOutput.removeDanglingBanknote();
+			//making sure the outputs are enabled
+			giveChange.station.banknoteOutput.enable();
+			giveChange.station.coinTray.enable();
 			giveChange.dispense();
 			
-			//if dispense worked correctly, change variable should be updated to not owe the user
-			double expected = 0.00;
+			boolean expected = false;
 			
-			assertEquals(expected, giveChange.getChange(),0.00);
+			assertEquals(expected, giveChange.getFailedToComplete());
 		} catch (Exception e) {
-			//fails if exception thrown because this is a valid station
-			
-			fail("Exception thrown for valid code with :" + e);
+			fail("Exception thrown for valid code");
 		}
 	}
+	
+	@Test //Testing getPayWithBanknote
+	public void testGetPayWithBanknote() {		
+		double totalOwed = 2.05;
+		
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		PayWithBanknote tester = giveChange.getPayWithBanknote();
+		
+		assertNotNull(tester);
+	}
+	
+	@Test //Testing getPayWithCoin
+	public void testGetPayWithCoin() {		
+		double totalOwed = 2.05;
+		
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		PayWithCoin tester = giveChange.getPayWithCoin();
+		
+		assertNotNull(tester);
+	}
+	
+	@Test //Testing getTotalOwed
+	public void testGetTotalOwed() {		
+		double totalOwed = 2.05;
+		
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		
+		assertEquals(totalOwed, giveChange.getTotalOwed(),0.00);
+	}
+	
+	@Test //Testing getTotalPaid
+	public void testGetTotalPaid() {		
+		double totalOwed = 2.05;
+		int totalPaid = 10;
+		
+		banknote = new Banknote(totalPaid, currency);
+		payWithBanknote.pay(banknote);
+		
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		
+		assertEquals(totalPaid, giveChange.getTotalPaid(),0.00);
+	}
 
-
-
-
-
-
-
+	@Test //Testing getBanknoteEnabled
+	public void testgetBanknoteSlotEnabled() {
+		double totalOwed = 1.00;
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		
+		boolean expected = true;
+		assertEquals(expected, giveChange.getBanknoteSlotEnabled());
+	}
+	
+	@Test //Testing getCoinTrayEnabled
+	public void testgetCoinTrayEnabled() {
+		double totalOwed = 1.00;
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		
+		boolean expected = true;
+		assertEquals(expected, giveChange.getCoinTrayEnabled());
+	}
+	
+	@Test //Testing getCoinTrayEnabled
+	public void testgetBanknoteRemoved() {
+		double totalOwed = 1.00;
+		GiveChange giveChange = new GiveChange(station, currency, totalOwed, payWithBanknote, payWithCoin);
+		
+		boolean expected = true;
+		assertEquals(expected, giveChange.getBanknoteRemoved());
+	}
+	
 }

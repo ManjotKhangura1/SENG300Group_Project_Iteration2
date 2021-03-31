@@ -14,7 +14,7 @@ public class FinishesAddingItems {
 	PayWithCoin coin;
 	PayWithBanknote banknote;
 	PayWithDebit debit;
-	//PayWithCredit credit;
+	PayWithCreditCard credit;
 	
 	private double finalPrice;
 	private ArrayList<String> finalList;
@@ -41,7 +41,7 @@ public class FinishesAddingItems {
 		coin = new PayWithCoin(station);
 		banknote = new PayWithBanknote(station);
 		debit = new PayWithDebit(station);
-		//credit = new PayWithCredit(station);
+		credit = new PayWithCreditCard(station, null);
 	}
 	 
 	/*

@@ -14,6 +14,10 @@ import org.lsmr.selfcheckout.devices.listeners.CardReaderListener;
 import org.lsmr.selfcheckout.external.CardIssuer;
 
 public class PayWithCreditCard {
+	
+	//enable and disable flag
+	public boolean enabled = true;
+	
 	//tracker for total amount paid
 	public BigDecimal amountPaid;
 	
@@ -22,7 +26,7 @@ public class PayWithCreditCard {
 	private static boolean cardRead = false;
 	
 	//interfaces and databases
-	private SelfCheckoutStation checkoutStation;
+	public SelfCheckoutStation checkoutStation;
 	public static CardIssuer issuer;
 	
 	
@@ -36,12 +40,14 @@ public class PayWithCreditCard {
 		@Override
 		public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
 			// TODO Auto-generated method stub
+			enabled = true;
 			
 		}
 
 		@Override
 		public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
 			// TODO Auto-generated method stub
+			enabled = false;
 			
 		}
 
@@ -93,6 +99,12 @@ public class PayWithCreditCard {
 	public void payWithTap(Card card, BigDecimal amount) throws SimulationException {
 		
 		try {
+			
+			if(!enabled) {
+				resetTransaction();
+				return;
+			}
+			
 			//set system to "in-progress"
 			inProgress = true; 
 			
@@ -124,6 +136,11 @@ public class PayWithCreditCard {
 	//paying with swipe
 	public void payWithSwipe(Card card, BigDecimal amount, BufferedImage sig) throws SimulationException {
 		
+		if(!enabled) {
+			resetTransaction();
+			return;
+		}
+		
 		try {
 			//set system to "in-progress"
 			inProgress = true;
@@ -154,6 +171,11 @@ public class PayWithCreditCard {
 	
 	//paying with swipe
 	public void payWithInsert(Card card, BigDecimal amount, String pin) throws SimulationException {
+		
+		if(!enabled) {
+			resetTransaction();
+			return;
+		}
 		
 		
 		try {
@@ -216,7 +238,7 @@ public class PayWithCreditCard {
 	}	
 	
 	public void cancelPayment() {
-		resetTransaction();
+		resetTransaction(); 
 		try { issuer.releaseHold(currentCardNumber, currentHoldNumber); }catch(Exception e){}
 	}
 	

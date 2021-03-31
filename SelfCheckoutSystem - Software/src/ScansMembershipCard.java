@@ -20,6 +20,8 @@ public class ScansMembershipCard { //through card reader
 	public boolean cardDataIsRead=false;
 	public boolean cardIsSwiped=false;
 	
+	int probabilityCounter;
+	
 	public CardData data;
 	
 	//instance of some arbitrary valid cards for testing purposes
@@ -67,7 +69,9 @@ public class ScansMembershipCard { //through card reader
 		@Override
 		public void cardDataRead(CardReader reader, CardData data) {
 			cardDataIsRead=true;
-			
+			//to keep count of probability 
+			probabilityCounter=probabilityCounter+1;
+				
 		}	  
 	  };  
 	
@@ -102,13 +106,13 @@ public class ScansMembershipCard { //through card reader
 					
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					
 				}
 					}
 		
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			
 		}
 		
 			return null;		

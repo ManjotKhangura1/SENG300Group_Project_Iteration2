@@ -12,12 +12,22 @@ public class FailBagging {
 	private Item item;
 	private double itemWeight = 0;
 	private boolean lock;
+	private double weightBeforeChange = 0;
 	
 	public FailBagging(SelfCheckoutStation selfCheckout)
 	{
 		this.baggingArea = selfCheckout.baggingArea;
 		this.selfCheckout = selfCheckout;
 		this.baggingArea.register(createBaggingListener());
+		try
+		{
+			weightBeforeChange = baggingArea.getCurrentWeight();
+		}
+		catch (Exception e)
+		{
+			System.out.println("Could not get weight of bagging area");
+			e.printStackTrace();
+		}
 	}
 
 	public boolean isLock() {
@@ -42,7 +52,7 @@ public class FailBagging {
 
 			@Override
 			public void weightChanged(ElectronicScale scale, double weightInGrams) {
-				if (itemWeight == weightInGrams)
+				if ((itemWeight + weightBeforeChange) == weightInGrams)
 				{
 					if (isLock())
 					{

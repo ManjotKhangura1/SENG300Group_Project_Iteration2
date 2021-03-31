@@ -33,7 +33,7 @@ public class PayWithDebit {
 				throw new SimulationException("Error when completing transaction");
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new SimulationException(e);
 		}
 		return true;
 	}
@@ -51,7 +51,7 @@ public class PayWithDebit {
 			}
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new SimulationException(e);
 		}
 		return true;
 

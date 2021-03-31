@@ -8,6 +8,7 @@ import org.lsmr.selfcheckout.Card.CardData;
 import org.lsmr.selfcheckout.devices.AbstractDevice;
 import org.lsmr.selfcheckout.devices.CardReader;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
+import org.lsmr.selfcheckout.devices.SimulationException;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
 import org.lsmr.selfcheckout.devices.listeners.CardReaderListener;
 import org.lsmr.selfcheckout.external.CardIssuer;
@@ -25,46 +26,52 @@ public class PayWithDebit {
 	}
 	
 	//pay with swipe
-	public void PayWithSwipe(Card card, CardIssuer issuer,  BufferedImage signature, BigDecimal amount)  {
+	public boolean PayWithSwipe(Card card, CardIssuer issuer,  BufferedImage signature, BigDecimal amount)  {
 		try {
 			CardData data = this.checkoutStation.cardReader.swipe(card, signature);
 			if ( !HandleDebitHold(data, issuer, amount)) {
-				throw new TransactionFailedException("Error when completing transaction");
-			}		
+				throw new SimulationException("Error when completing transaction");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return true;
 	}
 	
+	
 	//pay with tap
-	public void PayWithTap(Card card, CardIssuer issuer, BigDecimal amount)  {
+	public boolean PayWithTap(Card card, CardIssuer issuer, BigDecimal amount)  {
 		try {
 			CardData data = this.checkoutStation.cardReader.tap(card);
 			if(data == null) {
-				throw new TapEnableException("Tap not enabled");
+				throw new SimulationException("Tap not enabled");
 			}
 			if ( !HandleDebitHold(data, issuer, amount)) {
-				throw new TransactionFailedException("Error when completing transaction");
+				throw new SimulationException("Error when completing transaction");
 			}
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return true;
+
 	}
 	
-	public void PayWithInsert(Card card, CardIssuer issuer, BigDecimal amount, String pin)  {
+	public boolean PayWithInsert(Card card, CardIssuer issuer, BigDecimal amount, String pin)  {
 		try {
 			CardData data = this.checkoutStation.cardReader.insert(card, pin);
 			
 			if ( !HandleDebitHold(data, issuer, amount)) {
-				throw new TransactionFailedException("Error when completing transaction");
+				throw new SimulationException("Error when completing transaction");
 			}
 			this.checkoutStation.cardReader.remove();
 		} catch (IOException e) {
 			this.checkoutStation.cardReader.remove(); 	// Either way if you succeed or fail you have to remove the card
 			e.printStackTrace();
 		}
+		return true;
 	}
+	
 	
 	/**
 	 * Handles the debit transactions for your Card Issuer

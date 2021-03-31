@@ -1,23 +1,23 @@
 import org.lsmr.selfcheckout.Item;
 import org.lsmr.selfcheckout.devices.AbstractDevice;
+import org.lsmr.selfcheckout.devices.DisabledException;
 import org.lsmr.selfcheckout.devices.ElectronicScale;
 import org.lsmr.selfcheckout.devices.OverloadException;
 import org.lsmr.selfcheckout.devices.SelfCheckoutStation;
+import org.lsmr.selfcheckout.devices.SimulationException;
 import org.lsmr.selfcheckout.devices.listeners.AbstractDeviceListener;
 import org.lsmr.selfcheckout.devices.listeners.ElectronicScaleListener;
 
 public class AddOwnBag {
 	private ElectronicScale baggingArea;
-	private boolean isPlaced = false;
-	private double initialWeight;
-	private double finalWeight;
-	private double bagWeight;
-	private Bag bag;
+	private boolean isEnabled = true;
 	
 	public AddOwnBag(SelfCheckoutStation selfCheckout) throws OverloadException {
+		if (selfCheckout == null) {
+			throw new SimulationException(new NullPointerException("Self checkout station is null."));
+		}
 		this.baggingArea = selfCheckout.baggingArea;
 		selfCheckout.baggingArea.register(esl);
-		this.initialWeight = baggingArea.getCurrentWeight();
 		
 	}
 	
@@ -26,46 +26,57 @@ public class AddOwnBag {
 		@Override
 		public void enabled(AbstractDevice<? extends AbstractDeviceListener> device) {
 			// TODO Auto-generated method stub
-			
+			isEnabled = true;
 		}
 
 		@Override
 		public void disabled(AbstractDevice<? extends AbstractDeviceListener> device) {
 			// TODO Auto-generated method stub
-			
+			isEnabled = false;
 		}
 
 		@Override
 		public void weightChanged(ElectronicScale scale, double weightInGrams) {
 			// TODO Auto-generated method stub
-			isPlaced = true;
+			//isPlaced = true;
 		}
 
 		@Override
 		public void overload(ElectronicScale scale) {
 			// TODO Auto-generated method stub
-			
 		}
 
 		@Override
 		public void outOfOverload(ElectronicScale scale) {
 			// TODO Auto-generated method stub
-			
 		}
 		
 	};
 	
+	
+	
 	//main method
-	//once the listener announces that weight has changed, the weight of the bag is then calculated and added to the bagging area
-	public void AddBag() throws OverloadException {
-		if(isPlaced) {
-			finalWeight =  baggingArea.getCurrentWeight();
-			if(finalWeight - initialWeight >= 0) {
-				bagWeight = finalWeight - initialWeight;
-				bag = new Bag(bagWeight);
-				baggingArea.add(bag);
-			}
+	public void addBag(Bag bag) throws DisabledException {
+		if(!isEnabled) {
+			throw new DisabledException();
 		}
+		if(bag == null) {
+			throw new SimulationException(new NullPointerException("Null bag being added."));
+		}
+		baggingArea.add(bag);
+		
+	}
+	
+	public void removeBag(Bag bag) throws DisabledException, OverloadException {
+		if(!isEnabled) {
+			throw new DisabledException();
+		}
+		if(bag == null) {
+			throw new SimulationException(new NullPointerException("Null bag being removed."));
+		}
+		baggingArea.remove(bag);
+		
+		
 	}
 	
 
